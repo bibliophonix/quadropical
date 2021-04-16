@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Hello, Topic Modeler</title>
+</head>
+<body>
+<div id="content">
+  <h1>Topic Modeler</h1>
+  <div id="details">
+    <div id="upload">
+      <p>
+        <strong>Select Files:</strong>
+        <input type="file" name="file-upload" id="file-upload" multiple>
+      </p>
+    </div>
+
+    <div id="processing-details" class="toggle-content">
+      <p>
+        Training iterations processed: <span id="sweeps">0</span><br>
+        Time: <span id="time"></span>
+      </p>
+    </div>
+
+    <div id="corpus-topics" class="toggle-content">
+      <h2>Corpus Topics</h2>
+      <ol></ol>
+    </div>
+
+    <div id="term-distribution" class="toggle-content">
+      <h2>Term Distribution</h2>
+      <ul></ul>
+    </div>
+  </div>
+  <div id="graph"></div>
+</div>
+<script src="main.js"></script>
+</body>
+</html>

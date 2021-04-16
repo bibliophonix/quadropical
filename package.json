@@ -1,0 +1,24 @@
+{
+  "name": "quadropical",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "css-loader": "^5.2.1",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.33.2",
+    "webpack-cli": "^4.6.0"
+  },
+  "dependencies": {
+    "d3": "^6.6.2",
+    "jquery": "^3.6.0",
+    "topical": "file:../topical/topical-0.1.0.tgz"
+  }
+}
