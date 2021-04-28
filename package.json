@@ -19,6 +19,7 @@
   "dependencies": {
     "d3": "^6.6.2",
     "jquery": "^3.6.0",
+    "mathjs": "^9.3.2",
     "topical": "file:../topical/topical-0.1.0.tgz"
   }
 }

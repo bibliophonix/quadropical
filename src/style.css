@@ -1,4 +1,4 @@
-body{
+body {
   font-family: "Helvetica Neue", Helvetica, sans-serif;
   position: relative;
   tab-size: 2;
@@ -15,7 +15,7 @@ body{
 }
 
 
-#details, #upload, #processing-details, #corpus-topics, #term-distribution {
+#details, #upload, #processing-details, #corpus-topics, #term-distribution, #graph {
   position: relative;
   float: left;
 }
@@ -28,6 +28,17 @@ body{
 
 #details {
   width: 380px;
+}
+
+#upload, #processing-details, #corpus-topics, #term-distribution {
+  width: 100%;
+}
+
+
+#upload p {
+  position: relative;
+  float: left;
+  width: 100%;
 }
 
 
