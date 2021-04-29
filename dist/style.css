@@ -15,22 +15,23 @@ body {
 }
 
 
-#details, #upload, #processing-details, #corpus-topics, #term-distribution, #graph, #data-preparation {
+#details, #upload, #processing-details, #corpus-topics, #term-distribution,
+#main, #nav, #graph, #manage, #data-preparation {
   position: relative;
   float: left;
 }
 
 
-#processing-details, #corpus-topics, #term-distribution, #file-details, #data-preparation {
+#processing-details, #corpus-topics, #term-distribution, #graph, #document-list {
   display: none;
 }
 
 
 #details {
-  width: 380px;
+  width: 280px;
 }
 
-#upload, #processing-details, #corpus-topics, #term-distribution, #data-preparation {
+#upload, #processing-details, #corpus-topics, #term-distribution, #data-preparation, #nav {
   width: 100%;
 }
 
@@ -42,11 +43,82 @@ body {
 }
 
 
-#graph {
-  width: 700px;
+#main {
+  width: 800px;
+}
+
+
+#nav {
+  z-index: 9;
+}
+
+
+#main #nav ul {
+  /* border: 1px solid #ccc;
+  border-width: 1px 0; */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  /* text-align: center; */
+}
+
+
+#main #nav ul li {
+  display: inline;
+  margin: 0;
+}
+
+
+#main #nav ul li a {
+  display: inline-block;
+  padding: 10px 30px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #333;
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+
+
+#main #nav ul li a.selected {
+  border-bottom: 1px solid #fff;
+}
+
+
+#manage, #graph {
+  border: 1px solid #ccc;
+  width: 798px;
+  margin-top: -1px;
+}
+
+
+#manage>div, #manage>p, #graph>div, #graph>p {
+  width: 96%;
+  margin: auto 2%;
+}
+
+#corpus-topics ol {
+  margin-left: 0;
+  padding-left: 25px;
+}
+
+
+#data-preparation ul {
+  padding-left: 0;
+  -moz-column-count: 2;
+  -moz-column-gap: 20px;
+  -webkit-column-count: 2;
+  -webkit-column-gap: 20px;
+  column-count: 2;
+  column-gap: 20px;
 }
 
 
 #data-preparation ul li {
   list-style: none;
+}
+
+#document-list .article {
+  margin: auto auto 4em;
 }

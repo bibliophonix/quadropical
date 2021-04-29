@@ -7,50 +7,66 @@
 </head>
 <body>
 <div id="content">
-  <h1>Quadropical</h1>
   <div id="details">
-    <div id="upload">
-      <p>
-        <strong>Upload Your Corpus File:</strong>
-        <input type="file" name="corpus-upload" id="corpus-upload">
-      </p>
-    </div>
-
-    <div id="processing-details" class="toggle-content">
-      <p>
-        Training iterations processed: <span id="sweeps">0</span><br>
-        Time: <span id="time"></span>
-      </p>
-      <p>
-        <button id="resweep">Run 50 More Iterations</button>
-      </p>
-    </div>
-
+    <h1>Quadropical</h1>
     <div id="corpus-topics" class="toggle-content">
       <h2>Corpus Topics</h2>
       <ol></ol>
     </div>
-
-    <div id="term-distribution" class="toggle-content">
-      <h2>Term Distribution</h2>
-      <ul></ul>
-    </div>
-
-    <div id="data-preparation">
-      <div id="file-details"></div>
-      <div id="columns">
-        <form id="select-columns">
-          <p>Select the full text columns to use for your corpus:</p>
-          <ul></ul>
-          <p><button>Select Columns</button></p>
-        </form>
-        <p id="selected-columns"></p>
-      </div>
-    </div>
   </div>
 
-  <div id="graph">
-    <svg></svg>
+  <div id="main">
+    <div id="nav">
+      <ul>
+        <li><a href="#" class="selected">Manage</a></li>
+        <li><a href="#">Chart</a></li>
+      </ul>
+    </div>
+
+    <div id="manage">
+      <div id="upload">
+        <p>
+          <strong>CSV Upload:</strong>
+          <input type="file" name="corpus-upload" id="corpus-upload">
+        </p>
+      </div>
+
+      <div id="data-preparation">
+        <div id="columns">
+          <form id="select-columns">
+            <p>Select the full text columns to use for your corpus:</p>
+            <ul></ul>
+            <p><button>Select Columns</button></p>
+          </form>
+          <p id="selected-columns"></p>
+        </div>
+      </div>
+
+      <div id="term-distribution" class="toggle-content">
+        <h2>Term Distribution</h2>
+        <ul></ul>
+      </div>
+
+      <div id="stopwords">
+        <h2>Stopwords</h2>
+      </div>
+    </div>
+
+    <div id="graph">
+      <div id="processing-details" class="toggle-content">
+        <p>
+          Iterations: <span id="sweeps">0</span>
+          Time: <span id="time"></span>
+          <button id="resweep">Run 50 More Iterations</button>
+        </p>
+      </div>
+
+      <svg></svg>
+
+      <div id="document-list">
+        <h2>Documents</h2>
+      </div>
+    </div>
   </div>
 </div>
 <script src="main.js"></script>

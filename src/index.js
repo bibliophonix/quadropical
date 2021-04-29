@@ -5,7 +5,7 @@ import defaultStopwords from "./stopwords.js";
 
 
 // GLOBALS
-const width  = 700,
+const width  = 800,
       height = 700,
       margin = {top: 30, bottom: 50, left: 50, right: 50},
       constants = {radii: [0, 15], rotationCoefficient: complex((1 / sqrt(2)), (1 / sqrt(2)))},
@@ -24,7 +24,7 @@ function loadCsv(event) {
   if ("files" in fileUpload) {
     for (var i = 0; i < fileUpload.files.length; i++) {
       var file = fileUpload.files.item(i);
-      renderFileMetadata(file);
+      // renderFileMetadata(file);
       var reader = new FileReader();
       reader.addEventListener("loadend", event => parseAndShowCsvHeaders(event.srcElement.result));
       reader.readAsText(file);
@@ -33,10 +33,10 @@ function loadCsv(event) {
 }
 
 
-function renderFileMetadata(file) {
-  d3.select("#file-details").append("p").text(file.name + " " + file.size + " bytes");
-  d3.select("#file-details").style("display", "block");
-}
+// function renderFileMetadata(file) {
+//   d3.select("#file-details").append("p").text(file.name + " " + file.size + " bytes");
+//   d3.select("#file-details").style("display", "block");
+// }
 
 
 function parseAndShowCsvHeaders(contents) {
@@ -52,6 +52,7 @@ function parseAndShowCsvHeaders(contents) {
 
   columnLabels.append("input").attr("type", "checkbox").attr("name", "columns[]").attr("value", d => d);
   columnLabels.append("span").text(d => d);
+  toggleMainDisplay("Manage");
 }
 
 
@@ -67,6 +68,7 @@ function selectColumns(event) {
   initTopicModeler();
   clearQuadrants();
   displayCurrentTopics();
+  toggleMainDisplay("Chart");
   event.preventDefault();
 }
 
@@ -216,36 +218,38 @@ function displayCurrentTopics() {
     .attr("x", width - margin.right)
     .attr("y", margin.top * 2)
     .style("text-anchor", "end")
-    .text("Q1: " + topicLabels[0]);
+    .text("T1: " + topicLabels[0]);
 
   annotationGroup.append("text")
     .attr("class", "quadrant-label")
     .attr("x", margin.left * 1.5)
     .attr("y", margin.top * 2)
     .style("text-anchor", "start")
-    .text("Q2: " + topicLabels[1]);
+    .text("T2: " + topicLabels[1]);
 
   annotationGroup.append("text")
     .attr("class", "quadrant-label")
     .attr("x", margin.left * 1.5)
     .attr("y", height * .9)
     .style("text-anchor", "start")
-    .text("Q3: " + topicLabels[2]);
+    .text("T3: " + topicLabels[2]);
 
   annotationGroup.append("text")
     .attr("class", "quadrant-label")
     .attr("x", width - margin.right)
     .attr("y", height * .9)
     .style("text-anchor", "end")
-    .text("Q4: " + topicLabels[3]);
+    .text("T4: " + topicLabels[3]);
 
-  let articles = d3.select("#graph")
+  d3.select("#document-list").style("display", "block");
+  let articles = d3.select("#document-list")
       .selectAll(".article")
       .data(modeler.documents)
     .enter()
       .append("div")
       .attr("class", "article");
 
+  articles.append("p").text(d => `${d.id} (${d.date})`);
   articles.append("p").text(d => d.originalText);
   displayArticleTopicDetails();
 }
@@ -263,12 +267,37 @@ function displayArticleTopicDetails() {
 }
 
 
+function toggleNavigation(event) {
+  toggleMainDisplay(event.target.innerText);
+  event.preventDefault();
+}
+
+
+function toggleMainDisplay(displaySection) {
+  document.querySelectorAll("#main #nav ul li a").forEach(navItem => {
+    if (navItem.innerText == displaySection)
+      navItem.classList.add("selected");
+    else
+      navItem.classList.remove("selected");
+  });
+
+  if (displaySection == "Manage") {
+    d3.select("#manage").style("display", "block");
+    d3.select("#graph").style("display", "none");
+  } else {
+    d3.select("#graph").style("display", "block");
+    d3.select("#manage").style("display", "none");
+  }
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
   document.getElementById("select-columns").addEventListener("submit", selectColumns);
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
+  document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
