@@ -2,7 +2,7 @@ body {
   font-family: "Helvetica Neue", Helvetica, sans-serif;
   position: relative;
   tab-size: 2;
-  margin: 2em auto;
+  margin: .5em auto;
   float: left;
   width: 100%;
 }
@@ -15,14 +15,14 @@ body {
 }
 
 
-#details, #upload, #processing-details, #corpus-topics, #term-distribution, #graph {
+#details, #upload, #processing-details, #corpus-topics, #term-distribution, #graph, #data-preparation {
   position: relative;
   float: left;
 }
 
 
-#processing-details, #corpus-topics, #term-distribution {
-  opacity: 0;
+#processing-details, #corpus-topics, #term-distribution, #file-details, #data-preparation {
+  display: none;
 }
 
 
@@ -30,7 +30,7 @@ body {
   width: 380px;
 }
 
-#upload, #processing-details, #corpus-topics, #term-distribution {
+#upload, #processing-details, #corpus-topics, #term-distribution, #data-preparation {
   width: 100%;
 }
 
@@ -44,4 +44,9 @@ body {
 
 #graph {
   width: 700px;
+}
+
+
+#data-preparation ul li {
+  list-style: none;
 }

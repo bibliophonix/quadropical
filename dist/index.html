@@ -10,8 +10,8 @@
   <div id="details">
     <div id="upload">
       <p>
-        <strong>Select Files:</strong>
-        <input type="file" name="file-upload" id="file-upload" multiple>
+        <strong>Upload Your Corpus File:</strong>
+        <input type="file" name="corpus-upload" id="corpus-upload">
       </p>
     </div>
 
@@ -31,7 +31,20 @@
       <h2>Term Distribution</h2>
       <ul></ul>
     </div>
+
+    <div id="data-preparation">
+      <div id="file-details"></div>
+      <div id="columns">
+        <form id="select-columns">
+          <p>Select the full text columns to use for your corpus:</p>
+          <ul></ul>
+          <p><button>Select Columns</button></p>
+        </form>
+        <p id="selected-columns"></p>
+      </div>
+    </div>
   </div>
+
   <div id="graph">
     <svg></svg>
   </div>
