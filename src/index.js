@@ -2,7 +2,6 @@ import * as d3 from "d3";
 import { complex, add, multiply, chain, sqrt } from "mathjs";
 import { TopicModeler } from "topical";
 import defaultStopwords from "./stopwords.js";
-import "./style.css";
 
 
 // GLOBALS
@@ -56,7 +55,6 @@ function selectColumns(event) {
   selectedColumns = Array.from(document.querySelectorAll("input[name='columns[]']:checked"))
                          .map(checkbox => checkbox.value);
   documents = data.map(csvRow => {
-    // let docId = csvRow["ID"].replaceAll(/[:\.]/ig, "_");
     let docId = csvRow["ID"];
     let docDate = csvRow["Pub Year"];
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
