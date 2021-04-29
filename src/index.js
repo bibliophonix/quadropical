@@ -24,19 +24,12 @@ function loadCsv(event) {
   if ("files" in fileUpload) {
     for (var i = 0; i < fileUpload.files.length; i++) {
       var file = fileUpload.files.item(i);
-      // renderFileMetadata(file);
       var reader = new FileReader();
       reader.addEventListener("loadend", event => parseAndShowCsvHeaders(event.srcElement.result));
       reader.readAsText(file);
     }
   }
 }
-
-
-// function renderFileMetadata(file) {
-//   d3.select("#file-details").append("p").text(file.name + " " + file.size + " bytes");
-//   d3.select("#file-details").style("display", "block");
-// }
 
 
 function parseAndShowCsvHeaders(contents) {
@@ -118,7 +111,7 @@ function sweep() {
 
   // Pull out the top words from the topics
   for (let topic = 0; topic < modeler.numTopics; topic++)
-    topicTopWords[topic] = modeler.topNWords(modeler.topicWordCounts[topic], modeler.numTopics);
+    topicTopWords[topic] = modeler.topNWords(modeler.topicWordCounts[topic], 20);
 
   topicLabels = topicTopWords.map((item, number) => modeler.topNWords(modeler.topicWordCounts[number], 1));
 
@@ -146,7 +139,42 @@ function displayCurrentTopics() {
     .enter()
       .append("li")
       .attr("class", "topic")
+      .text(d => d.split(" ").slice(0, 4).join(" "));
+
+  // For the top topic words, how many topics do they appear in?
+  let wordCounts = {};
+  topicTopWords.forEach(wordList => {
+    wordList.split(" ").forEach(word => {
+      if (!wordCounts[word]) wordCounts[word] = {count: 0, word: word};
+      wordCounts[word].count += 1
+    });
+  });
+
+  d3.select("#top-terms").style("display", "block");
+  d3.select("#term-distribution ul")
+      .selectAll(".term")
+      .data(Object.values(wordCounts).sort((a, b) => d3.descending(a.count, b.count)))
+    .enter()
+      .append("li")
+      .attr("class", "term")
+      .text(d => d.word + ": " + d.count + " topic" + (d.count > 1 ? "s" : ""))
+
+  let topicTerms = d3.select("#top-terms-by-topic")
+      .selectAll(".topic")
+      .data(topicTopWords)
+    .enter()
+      .append("div")
+      .attr("class", "topic");
+
+  topicTerms.append("h3").text((d, i) => "Topic " + (i + 1));
+  topicTerms.append("ol")
+      .selectAll(".feature")
+      .data(d => d.split(" "))
+    .enter()
+      .append("li")
+      .attr("class", "feature")
       .text(d => d);
+
 
   const xScale = d3.scaleLinear()
     .domain(d3.extent(modeler.documents, d => d.coordinates.re))
@@ -291,6 +319,18 @@ function toggleMainDisplay(displaySection) {
 }
 
 
+function loadDefaultStopwords() {
+  d3.select("#stopwords")
+      .append("ol")
+      .selectAll(".stopword")
+      .data(defaultStopwords)
+    .enter()
+      .append("li")
+      .attr("class", "stopword")
+      .text(d => d);
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -298,6 +338,8 @@ const ready = () => {
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
+
+  loadDefaultStopwords();
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
