@@ -45,11 +45,10 @@ function parseAndShowCsvHeaders(contents) {
 
   columnLabels.append("input").attr("type", "checkbox").attr("name", "columns[]").attr("value", d => d);
   columnLabels.append("span").text(d => d);
-  toggleMainDisplay("Manage");
 }
 
 
-function selectColumns(event) {
+function processCorpus(event) {
   selectedColumns = Array.from(document.querySelectorAll("input[name='columns[]']:checked"))
                          .map(checkbox => checkbox.value);
   documents = data.map(csvRow => {
@@ -57,17 +56,16 @@ function selectColumns(event) {
     let docDate = csvRow["Pub Year"];
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
   });
-  clearTopics();
   initTopicModeler();
+  clearTopics();
   clearQuadrants();
   displayCurrentTopics();
-  toggleMainDisplay("Chart");
   event.preventDefault();
 }
 
 
 function initTopicModeler() {
-  stopwords = stopwords == undefined ? defaultStopwords : stopwords;
+  loadStopwords();
   modeler = new TopicModeler(stopwords, documents);
   modeler.numTopics = 4;
   modeler.processCorpus();
@@ -78,6 +76,9 @@ function initTopicModeler() {
 
 
 function clearTopics() {
+  // TODO: make these consistent by removing the empty list containers
+  d3.selectAll("#top-terms-by-topic .topic").remove();
+  d3.selectAll("#term-distribution ul li").remove();
   d3.selectAll("#corpus-topics ol li").remove();
   d3.select("svg g.container").remove();
   d3.selectAll(".article").remove();
@@ -173,7 +174,8 @@ function displayCurrentTopics() {
     .enter()
       .append("li")
       .attr("class", "feature")
-      .text(d => d);
+      .text(d => d)
+      .on("click", toggleCustomStopword);
 
 
   const xScale = d3.scaleLinear()
@@ -283,6 +285,26 @@ function displayCurrentTopics() {
 }
 
 
+function toggleCustomStopword(event) {
+  // Set the class for ALL instances if the feature term exists in multiple topics.
+  document.querySelectorAll("#top-terms-by-topic li").forEach(feature => {
+    if (feature.innerText == event.target.innerText)
+      feature.classList.toggle("custom-stopword");
+  });
+}
+
+
+function removeCustomStopword(event) {
+  if (event.target.classList.contains("custom-stopword"))
+    stopwords = stopwords.filter((value, index, arr) => value != event.target.innerText);
+  else
+    stopwords.push(event.target.innerText);
+
+  event.target.classList.toggle("custom-stopword");
+  event.target.classList.toggle("removed-custom-stopword");
+}
+
+
 function displayArticleTopicDetails() {
   let articles = d3.selectAll(".article");
 
@@ -319,27 +341,40 @@ function toggleMainDisplay(displaySection) {
 }
 
 
-function loadDefaultStopwords() {
+function loadStopwords() {
+  stopwords = stopwords == undefined ? defaultStopwords : stopwords;
+  let customStopwords = Array.from(document.querySelectorAll(".custom-stopword"))
+       .map(nodeItem => nodeItem.innerText)
+       .filter(unique);
+  stopwords = stopwords.concat(customStopwords).sort().filter(unique);
+
+  d3.select("#stopwords").style("display", "block");
+  d3.select("#stopwords ol").remove();
   d3.select("#stopwords")
       .append("ol")
       .selectAll(".stopword")
-      .data(defaultStopwords)
+      .data(stopwords)
     .enter()
       .append("li")
-      .attr("class", "stopword")
-      .text(d => d);
+      .attr("class", d => customStopwords.includes(d) ? "stopword custom-stopword" : "stopword")
+      .text(d => d)
+      .on("click", removeCustomStopword);
+}
+
+
+function unique(value, index, self) {
+  return self.indexOf(value) === index;
 }
 
 
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
-  document.getElementById("select-columns").addEventListener("submit", selectColumns);
+  document.getElementById("select-columns").addEventListener("submit", processCorpus);
+  document.getElementById("reprocess").addEventListener("click", processCorpus);
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
-
-  loadDefaultStopwords();
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))

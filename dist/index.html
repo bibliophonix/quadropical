@@ -34,6 +34,7 @@
       <div id="data-preparation">
         <div id="columns">
           <form id="select-columns">
+            <h2>Data Selection</h2>
             <p>Select the full text columns to use for your corpus:</p>
             <ul></ul>
             <p><button>Select Columns</button></p>
@@ -43,7 +44,11 @@
       </div>
 
       <div id="top-terms" class="toggle-content">
+        <button id="reprocess">Reprocess Corpus</button>
         <h2>Top 20 Terms/Features by Topic</h2>
+        <p>
+          Click on a term to add it to the stopword list for the next round of processing. Click again to undo.
+        </p>
         <div id="top-terms-by-topic">
         </div>
         <div id="term-distribution">
@@ -54,6 +59,10 @@
 
       <div id="stopwords">
         <h2>Stopwords</h2>
+        <p>
+          The following words will be ignored by the topic modeler. Stopwords in blue text are custom stopwords
+          selected from the topic lists. Custom stopwords can be removed from the next round of processing by clicking on them. Click again to undo.
+        </p>
       </div>
     </div>
 

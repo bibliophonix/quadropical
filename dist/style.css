@@ -22,7 +22,7 @@ body {
 }
 
 
-#processing-details, #corpus-topics, #top-terms, #graph, #document-list {
+#processing-details, #corpus-topics, #top-terms, #graph, #document-list, #data-preparation, #stopwords {
   display: none;
 }
 
@@ -90,6 +90,7 @@ body {
   border: 1px solid #ccc;
   width: 798px;
   margin-top: -1px;
+  min-height: 700px;
 }
 
 
@@ -138,6 +139,21 @@ body {
 }
 
 
+#manage #top-terms {
+  margin-top: 2em;
+}
+
+
+#manage button#reprocess {
+  float: right;
+}
+
+
+#top-terms h2 {
+  margin-top: 0;
+}
+
+
 #top-terms-by-topic .topic {
   width: 25%;
 }
@@ -146,6 +162,24 @@ body {
 #top-terms-by-topic .topic ol {
   margin-left: 0;
   padding-left: 25px;
+}
+
+
+#top-terms-by-topic .topic ol li.custom-stopword {
+  text-decoration: line-through;
+}
+
+
+#stopwords ol li.custom-stopword {
+  color: #1166ee;
+  font-weight: bold;
+}
+
+
+#stopwords ol li.removed-custom-stopword {
+  color: #1166ee;
+  font-weight: bold;
+  text-decoration: line-through;
 }
 
 
