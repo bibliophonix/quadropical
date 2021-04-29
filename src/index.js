@@ -12,7 +12,11 @@ const width  = 700,
       svg = d3.select("svg").attr("width", width).attr("height", height);
 
 
-let data, selectedColumns, documents, stopwords;
+let data, selectedColumns,
+      documents, stopwords, modeler,
+      topicLabels,
+      topicTopWords = [],
+      annotationGroup = svg.append("g").attr("class", "annotations");
 
 
 function loadCsv(event) {
@@ -59,63 +63,62 @@ function selectColumns(event) {
     let docDate = csvRow["Pub Year"];
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
   });
-  process();
+  clearTopics();
+  initTopicModeler();
+  clearQuadrants();
+  displayCurrentTopics();
   event.preventDefault();
 }
 
 
-function process() {
-  let start = new Date();
-
+function initTopicModeler() {
   stopwords = stopwords == undefined ? defaultStopwords : stopwords;
-  let modeler = new TopicModeler(stopwords, documents);
+  modeler = new TopicModeler(stopwords, documents);
   modeler.numTopics = 4;
   modeler.processCorpus();
   modeler.requestedSweeps = 100;
   d3.select("#processing-details").style("display", "block");
+  sweep();
+}
+
+
+function clearTopics() {
+  d3.selectAll("#corpus-topics ol li").remove();
+  d3.select("svg g.container").remove();
+  d3.selectAll(".article").remove();
+}
+
+
+function clearQuadrants() {
+  d3.selectAll(".axis").remove();
+  d3.selectAll(".quadrant-axis").remove();
+  d3.selectAll(".quadrant-label").remove();
+}
+
+function resweep() {
+  clearTopics();
+  modeler.requestedSweeps = modeler.completeSweeps + 50;
+  sweep();
+  clearQuadrants();
+  displayCurrentTopics();
+}
+
+
+function sweep() {
+
+  let start = new Date();
   while (modeler.completeSweeps < modeler.requestedSweeps) {
-      modeler.sweep();
-      document.getElementById("sweeps").innerHTML = modeler.completeSweeps;
+    modeler.sweep();
+    document.getElementById("sweeps").innerHTML = modeler.completeSweeps;
   }
-  console.log(modeler.documents)
-
-  // Pull out the top words from the topics
-  let topicTopWords = [];
-  for (let topic = 0; topic < modeler.numTopics; topic++)
-      topicTopWords.push(modeler.topNWords(modeler.topicWordCounts[topic], modeler.numTopics));
-
-  d3.select("#corpus-topics").style("display", "block");
-  d3.select("#corpus-topics ol")
-      .selectAll(".topic")
-      .data(topicTopWords)
-    .enter()
-      .append("li")
-      .attr("class", "topic")
-      .text(d => d);
-
-  // For the top topic words, how many topics do they appear in?
-  let wordCounts = {};
-  topicTopWords.forEach(wordList => {
-    wordList.split(" ").forEach(word => {
-      if (!wordCounts[word]) wordCounts[word] = {count: 0, word: word};
-      wordCounts[word].count += 1
-    });
-  });
-
-  // d3.select("#term-distribution").style("opacity", 1);
-  // d3.select("#term-distribution ul")
-  //     .selectAll(".term")
-  //     .data(Object.values(wordCounts).sort((a, b) => d3.descending(a.count, b.count)))
-  //   .enter()
-  //     .append("li")
-  //     .attr("class", "term")
-  //     .text(d => d.word + ": " + d.count + " topic" + (d.count > 1 ? "s" : ""))
-
   let finish = new Date();
   document.getElementById("time").innerHTML = (finish - start) + "ms";
 
+  // Pull out the top words from the topics
+  for (let topic = 0; topic < modeler.numTopics; topic++)
+    topicTopWords[topic] = modeler.topNWords(modeler.topicWordCounts[topic], modeler.numTopics);
 
-  let topicLabels = topicTopWords.map((item, number) => modeler.topNWords(modeler.topicWordCounts[number], 1));
+  topicLabels = topicTopWords.map((item, number) => modeler.topNWords(modeler.topicWordCounts[number], 1));
 
   modeler.documents.forEach(doc => {
     const topic1 = multiply(constants.rotationCoefficient, complex(doc.topicCounts[0], 0));
@@ -129,40 +132,47 @@ function process() {
                         .add(topic4)
                         .done();
   });
+}
 
+
+function displayCurrentTopics() {
+
+  d3.select("#corpus-topics").style("display", "block");
+  d3.select("#corpus-topics ol")
+      .selectAll(".topic")
+      .data(topicTopWords)
+    .enter()
+      .append("li")
+      .attr("class", "topic")
+      .text(d => d);
 
   const xScale = d3.scaleLinear()
     .domain(d3.extent(modeler.documents, d => d.coordinates.re))
     .range([margin.left, width - margin.right])
 
-
   const yScale = d3.scaleLinear()
     .domain(d3.extent(modeler.documents, d => d.coordinates.im))
     .range([height - margin.bottom, margin.top])
 
-
   // TODO: pick a real data point for the color
   const colorScale = d3.scaleSequential(d3.interpolateBuPu)
-    .domain(d3.extent(modeler.documents, d => d.coordinates.re))
+    .domain(d3.extent(modeler.documents, d => d.coordinates.re));
 
 
   // TODO: pick a real data point for the color
   const sizeScale = d3.scaleSqrt()
     .domain(d3.extent(modeler.documents, d => d.coordinates.re))
-    .range(constants.radii)
-
+    .range(constants.radii);
 
   const xAxis = d3.axisBottom(xScale);
   const yAxis = d3.axisLeft(yScale);
 
-
-  const dotsContainer = svg.append("g").attr("class","container")
-
-  const dotgroups = dotsContainer.selectAll(".dot")
-    .data(modeler.documents)
+  const dotgroups = svg.append("g").attr("class", "container")
+      .selectAll(".dot")
+      .data(modeler.documents)
     .join("g")
-    .attr("class", "dot")
-    .attr("transform", d => `translate(${xScale(d.coordinates.re)}, ${yScale(d.coordinates.im)})`);
+      .attr("class", "dot")
+      .attr("transform", d => `translate(${xScale(d.coordinates.re)}, ${yScale(d.coordinates.im)})`);
 
   dotgroups.append("circle")
     .attr("fill", "lightgrey")
@@ -170,8 +180,7 @@ function process() {
     // TODO
     .attr("r", "5");
 
-  svg.append("g")
-    .attr("class", "axis x-axis")
+  svg.append("g").attr("class", "axis x-axis")
     .attr("transform", `translate(0, ${height - margin.bottom})`)
     .call(xAxis)
     .append("text")
@@ -180,8 +189,7 @@ function process() {
     .attr("dy", "3em")
     .attr("x", "50%");
 
-  svg.append("g")
-    .attr("class", "axis y-axis")
+  svg.append("g").attr("class", "axis y-axis")
     .attr("transform", `translate(${margin.left}, 0)`)
     .call(yAxis)
     .append("text")
@@ -191,37 +199,41 @@ function process() {
     .attr("dx", "-3em");
 
   // add quadrant lines and labels
-  const annotationGroup = svg.append("g").attr("class", "annotations")
-
   annotationGroup.append("path")
+    .attr("class", "quadrant-axis")
     .attr("stroke","grey")
     .attr("transform",`translate(${xScale(0)},0)`)
     .attr("d", `M 0 ${margin.top} L 0 ${height - margin.bottom}`)
 
   annotationGroup.append("path")
+    .attr("class", "quadrant-axis")
     .attr("stroke","grey")
     .attr("transform",`translate(0,${yScale(0)})`)
     .attr("d", `M ${margin.left} 0  L ${width - margin.right} 0`)
 
   annotationGroup.append("text")
+    .attr("class", "quadrant-label")
     .attr("x", width - margin.right)
     .attr("y", margin.top * 2)
     .style("text-anchor", "end")
     .text("Q1: " + topicLabels[0]);
 
   annotationGroup.append("text")
+    .attr("class", "quadrant-label")
     .attr("x", margin.left * 1.5)
     .attr("y", margin.top * 2)
     .style("text-anchor", "start")
     .text("Q2: " + topicLabels[1]);
 
   annotationGroup.append("text")
+    .attr("class", "quadrant-label")
     .attr("x", margin.left * 1.5)
     .attr("y", height * .9)
     .style("text-anchor", "start")
     .text("Q3: " + topicLabels[2]);
 
   annotationGroup.append("text")
+    .attr("class", "quadrant-label")
     .attr("x", width - margin.right)
     .attr("y", height * .9)
     .style("text-anchor", "end")
@@ -235,10 +247,19 @@ function process() {
       .attr("class", "article");
 
   articles.append("p").text(d => d.originalText);
-  articles.append("p").text(d => {
-    return topicTopWords.map((item, number) => `${topicLabels[number]}: ${d.topicCounts[number]}`).join("; ");
-  });
-  articles.append("p").text(d => d.coordinates);
+  displayArticleTopicDetails();
+}
+
+
+function displayArticleTopicDetails() {
+  let articles = d3.selectAll(".article");
+
+  articles.append("p")
+    .attr("class", "article-topic-scores")
+    .text(d => {
+      return topicTopWords.map((item, number) => `${topicLabels[number]}: ${d.topicCounts[number]}`).join("; ");
+    });
+  articles.append("p").attr("class", "article-topic-coords").text(d => d.coordinates);
 }
 
 
@@ -247,6 +268,7 @@ const ready = () => {
   // EVENT WATCHERS
   document.getElementById("select-columns").addEventListener("submit", selectColumns);
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
+  document.getElementById("resweep").addEventListener("click", resweep);
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
