@@ -55,7 +55,12 @@ function parseAndShowCsvHeaders(contents) {
 function selectColumns(event) {
   selectedColumns = Array.from(document.querySelectorAll("input[name='columns[]']:checked"))
                          .map(checkbox => checkbox.value);
-  documents = data.map(csvRow => selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, ""));
+  documents = data.map(csvRow => {
+    // let docId = csvRow["ID"].replaceAll(/[:\.]/ig, "_");
+    let docId = csvRow["ID"];
+    let docDate = csvRow["Pub Year"];
+    return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
+  });
   process();
   event.preventDefault();
 }
@@ -74,6 +79,7 @@ function process() {
       modeler.sweep();
       document.getElementById("sweeps").innerHTML = modeler.completeSweeps;
   }
+  console.log(modeler.documents)
 
   // Pull out the top words from the topics
   let topicTopWords = [];
@@ -186,7 +192,7 @@ function process() {
     .attr("y", "50%")
     .attr("dx", "-3em");
 
-  // add quadrant lines
+  // add quadrant lines and labels
   const annotationGroup = svg.append("g").attr("class", "annotations")
 
   annotationGroup.append("path")
@@ -235,37 +241,6 @@ function process() {
     return topicTopWords.map((item, number) => `${topicLabels[number]}: ${d.topicCounts[number]}`).join("; ");
   });
   articles.append("p").text(d => d.coordinates);
-}
-
-
-async function readFileLines(fileUpload, filenameToMatch) {
-  let file,
-      lines  = new Array(),
-      reader = new FileReader();
-
-  if (fileUpload.files.item(0).name == filenameToMatch) file = fileUpload.files.item(0);
-  if (fileUpload.files.item(1).name == filenameToMatch) file = fileUpload.files.item(1);
-  if (file == undefined) throw "No file uploaded matching " + filenameToMatch;
-
-  await readUploadedFileAsText(file)
-        .then(contents => contents.split("\n").forEach(line => lines.push(line)))
-        .catch(error => console.error(error));
-
-  return lines;
-}
-
-
-const readUploadedFileAsText = (inputFile) => {
-  const reader = new FileReader();
-
-  return new Promise((resolve, reject) => {
-    reader.onerror = () => {
-      reader.abort();
-      reject(new DOMException("Problem parsing input file."));
-    };
-    reader.onload = () => resolve(reader.result);
-    reader.readAsText(inputFile);
-  });
 }
 
 
