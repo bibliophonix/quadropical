@@ -165,6 +165,11 @@ body {
 }
 
 
+#top-terms-by-topic ol li, #stopwords ol li {
+  cursor: default;
+}
+
+
 #top-terms-by-topic .topic ol li.custom-stopword {
   text-decoration: line-through;
 }
