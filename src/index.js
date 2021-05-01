@@ -367,6 +367,16 @@ function unique(value, index, self) {
 }
 
 
+function addManualStopwords() {
+  document.getElementById("manual-stopwords").value.split(/\s+/).forEach(word => {
+    d3.select("#stopwords ol").append("li").attr("class", "stopword custom-stopword").text(word);
+  });
+  loadStopwords();
+  document.getElementById("manual-stopwords").value = "";
+  event.preventDefault();
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -374,6 +384,7 @@ const ready = () => {
   document.getElementById("reprocess").addEventListener("click", processCorpus);
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
+  document.getElementById("add-stopwords").addEventListener("submit", addManualStopwords);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
 };
 
