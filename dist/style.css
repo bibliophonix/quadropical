@@ -188,6 +188,13 @@ body {
 }
 
 
+#stopwords ol li.removed-default-stopword {
+  color: #880000;
+  font-weight: bold;
+  text-decoration: line-through;
+}
+
+
 #term-distribution ul {
   margin-left: 0;
   padding-left: 25px;

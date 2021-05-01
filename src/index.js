@@ -285,26 +285,6 @@ function displayCurrentTopics() {
 }
 
 
-function toggleCustomStopword(event) {
-  // Set the class for ALL instances if the feature term exists in multiple topics.
-  document.querySelectorAll("#top-terms-by-topic li").forEach(feature => {
-    if (feature.innerText == event.target.innerText)
-      feature.classList.toggle("custom-stopword");
-  });
-}
-
-
-function removeCustomStopword(event) {
-  if (event.target.classList.contains("custom-stopword"))
-    stopwords = stopwords.filter((value, index, arr) => value != event.target.innerText);
-  else
-    stopwords.push(event.target.innerText);
-
-  event.target.classList.toggle("custom-stopword");
-  event.target.classList.toggle("removed-custom-stopword");
-}
-
-
 function displayArticleTopicDetails() {
   let articles = d3.selectAll(".article");
 
@@ -342,23 +322,56 @@ function toggleMainDisplay(displaySection) {
 
 
 function loadStopwords() {
-  stopwords = stopwords == undefined ? defaultStopwords : stopwords;
+  // stopwords = stopwords == undefined ? defaultStopwords : stopwords;
   let customStopwords = Array.from(document.querySelectorAll(".custom-stopword"))
        .map(nodeItem => nodeItem.innerText)
        .filter(unique);
-  stopwords = stopwords.concat(customStopwords).sort().filter(unique);
+  let removedDefaultStopwords = Array.from(document.querySelectorAll(".removed-default-stopword"))
+       .map(nodeItem => nodeItem.innerText)
+       .filter(unique);
+  stopwords = defaultStopwords.filter(word => !removedDefaultStopwords.includes(word))
+       .concat(customStopwords)
+       .sort()
+       .filter(unique);
 
   d3.select("#stopwords").style("display", "block");
   d3.select("#stopwords ol").remove();
   d3.select("#stopwords")
       .append("ol")
       .selectAll(".stopword")
-      .data(stopwords)
+      .data(customStopwords.concat(defaultStopwords).sort())
     .enter()
       .append("li")
-      .attr("class", d => customStopwords.includes(d) ? "stopword custom-stopword" : "stopword")
+      .attr("class", d => {
+        let cls = ["stopword"];
+        if (customStopwords.includes(d)) cls.push("custom-stopword");
+        if (removedDefaultStopwords.includes(d)) cls.push("removed-default-stopword");
+        return cls.join(" ");
+      })
       .text(d => d)
-      .on("click", removeCustomStopword);
+      .on("click", toggleStopword);
+}
+
+
+function toggleCustomStopword(event) {
+  // Set the class for ALL instances if the feature term exists in multiple topics.
+  document.querySelectorAll("#top-terms-by-topic li").forEach(feature => {
+    if (feature.innerText == event.target.innerText)
+      feature.classList.toggle("custom-stopword");
+  });
+}
+
+
+function toggleStopword(event) {
+  if (event.target.classList.contains("custom-stopword")) {
+    // stopwords = stopwords.filter((value, index, arr) => value != event.target.innerText);
+    event.target.classList.remove("custom-stopword");
+    event.target.classList.toggle("removed-custom-stopword");
+  } else if (event.target.classList.contains("removed-default-stopword")) {
+    event.target.classList.remove("removed-default-stopword");
+  } else {
+    event.target.classList.add("removed-default-stopword");
+  }
 }
 
 
