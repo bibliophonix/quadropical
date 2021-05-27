@@ -9,13 +9,15 @@ const width  = 800,
       height = 700,
       margin = {top: 30, bottom: 50, left: 50, right: 50},
       constants = {radii: [0, 15], rotationCoefficient: complex((1 / sqrt(2)), (1 / sqrt(2)))},
-      svg = d3.select("svg").attr("width", width).attr("height", height);
-
+      svg = d3.select("svg").attr("width", width).attr("height", height),
+      xScale = d3.scaleLinear().range([margin.left, width - margin.right]),
+      yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]);
 
 let data, selectedColumns,
       documents, stopwords, modeler,
       topicLabels,
       topicTopWords = [],
+      references = {},
       annotationGroup = svg.append("g").attr("class", "annotations");
 
 
@@ -34,6 +36,19 @@ function loadCsv(event) {
 
 function parseAndShowCsvHeaders(contents) {
   data = d3.csvParse(contents);
+
+  // Set up a convenience Hash for tracking references. Only track references within the data set.
+  references = data.reduce((references, article) => {
+    references[article["ID"]] = [];
+    return references;
+  }, {});
+  data.forEach(article => {
+    article["References"].split("; ").forEach(citedId => {
+      if (references.hasOwnProperty(citedId)) {
+        references[citedId].push(article["ID"]);
+      }
+    });
+  });
 
   d3.select("#data-preparation").style("display", "block");
   let columnLabels = d3.select("#select-columns ul")
@@ -57,6 +72,7 @@ function processCorpus(event) {
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
   });
   initTopicModeler();
+  addDocumentReferences();
   clearTopics();
   clearQuadrants();
   displayCurrentTopics();
@@ -75,6 +91,13 @@ function initTopicModeler() {
 }
 
 
+function addDocumentReferences() {
+  modeler.documents.forEach(doc => {
+    doc.citingIds = references[doc.id];
+  });
+}
+
+
 function clearTopics() {
   // TODO: make these consistent by removing the empty list containers
   d3.selectAll("#top-terms-by-topic .topic").remove();
@@ -82,6 +105,7 @@ function clearTopics() {
   d3.selectAll("#corpus-topics ol li").remove();
   d3.select("svg g.container").remove();
   d3.selectAll(".article").remove();
+  document.getElementById("show-networks").checked = false;
 }
 
 
@@ -178,13 +202,9 @@ function displayCurrentTopics() {
       .on("click", toggleCustomStopword);
 
 
-  const xScale = d3.scaleLinear()
-    .domain(d3.extent(modeler.documents, d => d.coordinates.re))
-    .range([margin.left, width - margin.right])
+  xScale.domain(d3.extent(modeler.documents, d => d.coordinates.re));
+  yScale.domain(d3.extent(modeler.documents, d => d.coordinates.im));
 
-  const yScale = d3.scaleLinear()
-    .domain(d3.extent(modeler.documents, d => d.coordinates.im))
-    .range([height - margin.bottom, margin.top])
 
   // TODO: pick a real data point for the color
   const colorScale = d3.scaleSequential(d3.interpolateBuPu)
@@ -375,6 +395,37 @@ function toggleStopword(event) {
 }
 
 
+function toggleNetworks(event) {
+  if (event.target.checked) {
+
+    let container = d3.select("svg g.container");
+    modeler.documents.forEach(doc => {
+      let articleDoc = getDocumentByArticleId(doc.id);
+      doc.citingIds.map(citingId => getDocumentByArticleId(citingId))
+                      .filter(citingDoc => citingDoc !== undefined)
+                      .forEach(citingDoc => {
+                        container.append("line")
+                          .style("stroke", "steelblue")
+                          .style("stroke-width", "1")
+                          .style("opacity", 0.33)
+                          .attr("class", "citing-line")
+                          .attr("x1", xScale(articleDoc.coordinates.re))
+                          .attr("y1", yScale(articleDoc.coordinates.im))
+                          .attr("x2", xScale(citingDoc.coordinates.re))
+                          .attr("y2", yScale(citingDoc.coordinates.im));
+                      });
+    });
+  } else {
+    d3.selectAll(".citing-line").remove();
+  }
+}
+
+
+function getDocumentByArticleId(articleId) {
+  return modeler.documents.filter(doc => doc.id == articleId)[0];
+}
+
+
 function unique(value, index, self) {
   return self.indexOf(value) === index;
 }
@@ -399,6 +450,7 @@ const ready = () => {
   document.getElementById("resweep").addEventListener("click", resweep);
   document.getElementById("add-stopwords").addEventListener("submit", addManualStopwords);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
+  document.getElementById("show-networks").addEventListener("change", toggleNetworks);
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))

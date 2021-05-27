@@ -207,3 +207,16 @@ body {
   column-count: 4;
   column-gap: 20px;
 }
+
+
+#processing-details div {
+  position: relative;
+  float: left;
+  width: 50%;
+  margin: 1.2em auto;
+}
+
+
+#processing-details #network-controls {
+  text-align: right;
+}

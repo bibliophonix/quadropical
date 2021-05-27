@@ -9,7 +9,7 @@
 <div id="content">
   <div id="details">
     <h1>Quadropical</h1>
-    <div id="corpus-topics" class="toggle-content">
+    <div id="corpus-topics">
       <h2>Corpus Topics</h2>
       <ol></ol>
     </div>
@@ -43,7 +43,7 @@
         </div>
       </div>
 
-      <div id="top-terms" class="toggle-content">
+      <div id="top-terms">
         <button id="reprocess">Reprocess Corpus</button>
         <h2>Top 20 Terms/Features by Topic</h2>
         <p>
@@ -76,12 +76,18 @@
     </div>
 
     <div id="graph">
-      <div id="processing-details" class="toggle-content">
-        <p>
+      <div id="processing-details">
+        <div id="iterations">
           Iterations: <span id="sweeps">0</span>
           Time: <span id="time"></span>
           <button id="resweep">Run 50 More Iterations</button>
-        </p>
+        </div>
+        <div id="network-controls">
+          <label>
+            Show Networks
+            <input type="checkbox" name="show-networks" id="show-networks">
+          </label>
+        </div>
       </div>
 
       <svg></svg>
