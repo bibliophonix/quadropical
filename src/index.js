@@ -38,15 +38,11 @@ function parseAndShowCsvHeaders(contents) {
   data = d3.csvParse(contents);
 
   // Set up a convenience Hash for tracking references. Only track references within the data set.
-  references = data.reduce((references, article) => {
-    references[article["ID"]] = [];
-    return references;
-  }, {});
-  data.forEach(article => {
-    article["References"].split("; ").forEach(citedId => {
-      if (references.hasOwnProperty(citedId)) {
-        references[citedId].push(article["ID"]);
-      }
+  references = data.reduce((result, article) => ({...result, [article.ID] : new Array()}), {});
+  data.forEach(a => {
+    a.References.split("; ").forEach(citedId => {
+      if (references.hasOwnProperty(citedId))
+        references[citedId].push(a.ID);
     });
   });
 
@@ -402,18 +398,18 @@ function toggleNetworks(event) {
     modeler.documents.forEach(doc => {
       let articleDoc = getDocumentByArticleId(doc.id);
       doc.citingIds.map(citingId => getDocumentByArticleId(citingId))
-                      .filter(citingDoc => citingDoc !== undefined)
-                      .forEach(citingDoc => {
-                        container.append("line")
-                          .style("stroke", "steelblue")
-                          .style("stroke-width", "1")
-                          .style("opacity", 0.33)
-                          .attr("class", "citing-line")
-                          .attr("x1", xScale(articleDoc.coordinates.re))
-                          .attr("y1", yScale(articleDoc.coordinates.im))
-                          .attr("x2", xScale(citingDoc.coordinates.re))
-                          .attr("y2", yScale(citingDoc.coordinates.im));
-                      });
+          .filter(citingDoc => citingDoc !== undefined)
+          .forEach(citingDoc => {
+            container.append("line")
+              .style("stroke", "steelblue")
+              .style("stroke-width", "1")
+              .style("opacity", 0.33)
+              .attr("class", "citing-line")
+              .attr("x1", xScale(articleDoc.coordinates.re))
+              .attr("y1", yScale(articleDoc.coordinates.im))
+              .attr("x2", xScale(citingDoc.coordinates.re))
+              .attr("y2", yScale(citingDoc.coordinates.im));
+          });
     });
   } else {
     d3.selectAll(".citing-line").remove();
