@@ -16,13 +16,13 @@ body {
 
 
 #details, #upload, #processing-details, #corpus-topics, #top-terms,
-#main, #nav, #graph, #manage, #data-preparation, #top-terms-by-topic, .topic {
+#main, #nav, #graph, #manage, #data-preparation, #top-terms-by-topic, #stopwords, #synonyms, .topic {
   position: relative;
   float: left;
 }
 
 
-#processing-details, #corpus-topics, #top-terms, #graph, #document-list, #data-preparation, #stopwords {
+#processing-details, #corpus-topics, #top-terms, #graph, #document-list, #data-preparation, #stopwords, #synonyms {
   display: none;
 }
 

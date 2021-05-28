@@ -18,6 +18,7 @@ let data, selectedColumns,
       topicLabels,
       topicTopWords = [],
       references = {},
+      synonyms = {},
       annotationGroup = svg.append("g").attr("class", "annotations");
 
 
@@ -79,6 +80,7 @@ function processCorpus(event) {
 function initTopicModeler() {
   loadStopwords();
   modeler = new TopicModeler(stopwords, documents);
+  modeler.synonyms = synonyms;
   modeler.numTopics = 4;
   modeler.processCorpus();
   modeler.requestedSweeps = 100;
@@ -350,6 +352,7 @@ function loadStopwords() {
        .sort()
        .filter(unique);
 
+  d3.select("#synonyms").style("display", "block");
   d3.select("#stopwords").style("display", "block");
   d3.select("#stopwords ol").remove();
   d3.select("#stopwords")
@@ -437,6 +440,24 @@ function addManualStopwords() {
 }
 
 
+function addManualSynonyms() {
+  let newSynonyms = document.getElementById("manual-synonyms").value.split(/\s+/);
+  let mainWord = newSynonyms.shift();
+  newSynonyms.forEach(word => synonyms[word] = mainWord);
+  d3.selectAll(".mapped-synonym").remove();
+  d3.select("#synonyms")
+      .selectAll(".mapped-synonym")
+      .data(Object.keys(synonyms).sort())
+    .enter()
+      .append("p")
+      .attr("class", "mapped-synonym")
+      .text(d => `${d}: ${synonyms[d]}`);
+
+  document.getElementById("manual-synonyms").value = "";
+  event.preventDefault();
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -445,6 +466,7 @@ const ready = () => {
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
   document.getElementById("add-stopwords").addEventListener("submit", addManualStopwords);
+  document.getElementById("add-synonyms").addEventListener("submit", addManualSynonyms);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
   document.getElementById("show-networks").addEventListener("change", toggleNetworks);
 };
