@@ -16,6 +16,7 @@ let data, selectedColumns,
       documents, stopwords, modeler,
       topicLabels,
       topicTopWords = [],
+      synonyms = {},
       annotationGroup = svg.append("g").attr("class", "annotations");
 
 
@@ -67,6 +68,7 @@ function processCorpus(event) {
 function initTopicModeler() {
   loadStopwords();
   modeler = new TopicModeler(stopwords, documents);
+  modeler.synonyms = synonyms;
   modeler.numTopics = 4;
   modeler.processCorpus();
   modeler.requestedSweeps = 100;
@@ -390,6 +392,15 @@ function addManualStopwords() {
 }
 
 
+function addManualSynonyms() {
+  let newSynonyms = document.getElementById("manual-synonyms").value.split(/\s+/);
+  let mainWord = newSynonyms.shift();
+  newSynonyms.forEach(word => synonyms[word] = mainWord);
+  document.getElementById("manual-stopwords").value = "";
+  event.preventDefault();
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -398,6 +409,7 @@ const ready = () => {
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
   document.getElementById("add-stopwords").addEventListener("submit", addManualStopwords);
+  document.getElementById("add-synonyms").addEventListener("submit", addManualSynonyms);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
 };
 
