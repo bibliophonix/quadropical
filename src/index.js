@@ -336,6 +336,7 @@ function loadStopwords() {
        .sort()
        .filter(unique);
 
+  d3.select("#synonyms").style("display", "block");
   d3.select("#stopwords").style("display", "block");
   d3.select("#stopwords ol").remove();
   d3.select("#stopwords")
@@ -396,7 +397,16 @@ function addManualSynonyms() {
   let newSynonyms = document.getElementById("manual-synonyms").value.split(/\s+/);
   let mainWord = newSynonyms.shift();
   newSynonyms.forEach(word => synonyms[word] = mainWord);
-  document.getElementById("manual-stopwords").value = "";
+  d3.selectAll(".mapped-synonym").remove();
+  d3.select("#synonyms")
+      .selectAll(".mapped-synonym")
+      .data(Object.keys(synonyms).sort())
+    .enter()
+      .append("p")
+      .attr("class", "mapped-synonym")
+      .text(d => `${d}: ${synonyms[d]}`);
+
+  document.getElementById("manual-synonyms").value = "";
   event.preventDefault();
 }
 

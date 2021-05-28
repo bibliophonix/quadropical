@@ -75,6 +75,14 @@
       </div>
 
       <div id="synonyms">
+        <h2>Synonyms</h2>
+        <p>
+          Add synonyms to cluster individual words in your corpus to be treated as the same word. Add synonyms using the format:
+        </p>
+        <pre>label-term mapped-term-1 mapped-term-2 ... mapped-term-<em>N</em></pre>
+        <p>
+          All mapped terms will be replaced by the label term in the first position. This tool does not do any word stemming and so this is useful for associating singular and plural forms of words or abbreviations. However there are no restrictions and so any terms can be mapped (e.g., <code>pesticide pesticides insecticide insecticides</code>).
+        </p>
         <p>
           <form id="add-synonyms">
             <label>
