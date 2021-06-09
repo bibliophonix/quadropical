@@ -15,14 +15,14 @@ body {
 }
 
 
-#details, #upload, #processing-details, #corpus-topics, #top-terms,
-#main, #nav, #graph, #manage, #data-preparation, #top-terms-by-topic, #stopwords, #synonyms, .topic {
+#details, #processing-details, #corpus-topics, #top-terms, #main, #nav, #graph, #manage,
+#files, #upload, #download, #data-preparation, #top-terms-by-topic, #stopwords, #synonyms, .topic {
   position: relative;
   float: left;
 }
 
 
-#processing-details, #corpus-topics, #top-terms, #graph, #document-list, #data-preparation, #stopwords, #synonyms {
+#download, #processing-details, #corpus-topics, #top-terms, #graph, #document-list, #data-preparation, #stopwords, #synonyms {
   display: none;
 }
 
@@ -31,15 +31,21 @@ body {
   width: 280px;
 }
 
-#upload, #processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #top-terms-by-topic {
+#upload, #download, #processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
   width: 100%;
 }
 
 
-#upload p {
+#upload, #download {
+  margin-top: 2em;
+}
+
+
+#upload p, #download p {
   position: relative;
   float: left;
   width: 100%;
+  margin: .5em auto 0;
 }
 
 
@@ -98,6 +104,17 @@ body {
   width: 96%;
   margin: auto 2%;
 }
+
+
+#files {
+  width: 100%;
+}
+
+
+#download {
+  text-align: right;
+}
+
 
 #corpus-topics ol {
   margin-left: 0;

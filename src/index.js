@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import { complex, add, multiply, chain, sqrt } from "mathjs";
 import { TopicModeler } from "topical";
 import defaultStopwords from "./stopwords.js";
+import saveAs           from "./saveas.js";
 
 
 // GLOBALS
@@ -9,11 +10,16 @@ const width  = 800,
       height = 700,
       margin = {top: 30, bottom: 50, left: 50, right: 50},
       constants = {radii: [0, 15], rotationCoefficient: complex((1 / sqrt(2)), (1 / sqrt(2)))},
+      formatTimestamp = d3.timeFormat("%Y%m%dT%H%M%S%L"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
 
 
-let data, selectedColumns,
-      documents, stopwords, modeler,
+let data, columns, selectedColumns,
+      documents,
+      stopwords = defaultStopwords,
+      customStopwords = [],
+      removedDefaultStopwords = [],
+      modeler,
       topicLabels,
       topicTopWords = [],
       synonyms = {},
@@ -23,65 +29,113 @@ let data, selectedColumns,
 function loadCsv(event) {
   let fileUpload = event.target;
   if ("files" in fileUpload) {
-    for (var i = 0; i < fileUpload.files.length; i++) {
-      var file = fileUpload.files.item(i);
-      var reader = new FileReader();
-      reader.addEventListener("loadend", event => parseAndShowCsvHeaders(event.srcElement.result));
-      reader.readAsText(file);
-    }
+    const file = fileUpload.files.item(0);
+    const reader = new FileReader();
+    reader.addEventListener("loadend", event => file.name.endsWith(".csv") ? parseAndShowCsvHeaders(event.srcElement.result) : loadSessionFile(event.srcElement.result));
+    reader.readAsText(file);
   }
+}
+
+
+function loadSessionFile(session) {
+  session = JSON.parse(session);
+
+  data                    = session.data;
+  selectedColumns         = session.selectedColumns;
+  documents               = session.documents;
+  stopwords               = session.stopwords;
+  customStopwords         = session.customStopwords;
+  removedDefaultStopwords = session.removedDefaultStopwords;
+  synonyms                = session.synonyms;
+  modeler                 = session.modeler;
+  topicTopWords           = session.topicTopWords;
+  topicLabels             = session.topicLabels;
+
+  loadStopwords(true);
+  displayColumns(session.columns, session.selectedColumns);
+  processCorpus();
 }
 
 
 function parseAndShowCsvHeaders(contents) {
   data = d3.csvParse(contents);
+  columns = data.columns;
+  loadStopwords(true);
+  displayColumns(columns);
+}
 
+
+function displayColumns(columns, selectedColumns) {
+  d3.select("#download").style("display", "block");
+  d3.select("#upload").style("display", "none");
   d3.select("#data-preparation").style("display", "block");
+
   let columnLabels = d3.select("#select-columns ul")
       .selectAll("li")
-      .data(data.columns)
+      .data(columns)
     .enter()
       .append("li")
       .append("label");
 
   columnLabels.append("input").attr("type", "checkbox").attr("name", "columns[]").attr("value", d => d);
   columnLabels.append("span").text(d => d);
+
+  if (selectedColumns !== undefined)
+    columnLabels.selectAll("input").property("checked", input => selectedColumns.includes(input));
 }
 
 
-function processCorpus(event) {
-  selectedColumns = Array.from(document.querySelectorAll("input[name='columns[]']:checked"))
-                         .map(checkbox => checkbox.value);
+function reprocess(event) {
+  loadStopwords(false);
+  runModeling();
+  event.preventDefault();
+}
+
+
+function selectColumns(event) {
+  runModeling();
+  event.preventDefault();
+}
+
+
+function runModeling() {
+  selectedColumns = Array.from(document.querySelectorAll("input[name='columns[]']:checked")).map(checkbox => checkbox.value);
   documents = data.map(csvRow => {
     let docId = csvRow["ID"];
     let docDate = csvRow["Pub Year"];
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
   });
+
   initTopicModeler();
+  processCorpus();
+}
+
+
+function processCorpus() {
   clearTopics();
   clearQuadrants();
   displayCurrentTopics();
-  event.preventDefault();
 }
 
 
 function initTopicModeler() {
-  loadStopwords();
   modeler = new TopicModeler(stopwords, documents);
   modeler.synonyms = synonyms;
   modeler.numTopics = 4;
   modeler.processCorpus();
   modeler.requestedSweeps = 100;
-  d3.select("#processing-details").style("display", "block");
   sweep();
 }
 
 
 function clearTopics() {
   // TODO: make these consistent by removing the empty list containers
+  d3.select("#processing-details").style("display", "block");
   d3.selectAll("#top-terms-by-topic .topic").remove();
   d3.selectAll("#term-distribution ul li").remove();
   d3.selectAll("#corpus-topics ol li").remove();
+  d3.select("#synonyms").style("display", "block");
+  d3.select("#stopwords").style("display", "block");
   d3.select("svg g.container").remove();
   d3.selectAll(".article").remove();
 }
@@ -323,21 +377,20 @@ function toggleMainDisplay(displaySection) {
 }
 
 
-function loadStopwords() {
-  // stopwords = stopwords == undefined ? defaultStopwords : stopwords;
-  let customStopwords = Array.from(document.querySelectorAll(".custom-stopword"))
-       .map(nodeItem => nodeItem.innerText)
-       .filter(unique);
-  let removedDefaultStopwords = Array.from(document.querySelectorAll(".removed-default-stopword"))
-       .map(nodeItem => nodeItem.innerText)
-       .filter(unique);
-  stopwords = defaultStopwords.filter(word => !removedDefaultStopwords.includes(word))
-       .concat(customStopwords)
-       .sort()
-       .filter(unique);
+function loadStopwords(firstLoad) {
+  if (!firstLoad) {
+    customStopwords = Array.from(document.querySelectorAll(".custom-stopword"))
+         .map(nodeItem => nodeItem.innerText)
+         .filter(unique);
+    removedDefaultStopwords = Array.from(document.querySelectorAll(".removed-default-stopword"))
+         .map(nodeItem => nodeItem.innerText)
+         .filter(unique);
+    stopwords = defaultStopwords.filter(word => !removedDefaultStopwords.includes(word))
+         .concat(customStopwords)
+         .sort()
+         .filter(unique);
+  }
 
-  d3.select("#synonyms").style("display", "block");
-  d3.select("#stopwords").style("display", "block");
   d3.select("#stopwords ol").remove();
   d3.select("#stopwords")
       .append("ol")
@@ -387,7 +440,7 @@ function addManualStopwords() {
   document.getElementById("manual-stopwords").value.split(/\s+/).forEach(word => {
     d3.select("#stopwords ol").append("li").attr("class", "stopword custom-stopword").text(word);
   });
-  loadStopwords();
+  loadStopwords(false);
   document.getElementById("manual-stopwords").value = "";
   event.preventDefault();
 }
@@ -411,16 +464,40 @@ function addManualSynonyms() {
 }
 
 
+function download() {
+
+  saveAs(
+    new Blob([JSON.stringify({
+      data: data,
+      columns: columns,
+      selectedColumns: selectedColumns,
+      documents: documents,
+      stopwords: stopwords,
+      customStopwords: customStopwords,
+      removedDefaultStopwords: removedDefaultStopwords,
+      synonyms: synonyms,
+      modeler: modeler,
+      topicTopWords: topicTopWords,
+      topicLabels: topicLabels
+    })], {type: "application/json;charset=utf-8"}),
+    "quadropical-session-" + formatTimestamp(new Date()) + ".json"
+  );
+
+  event.preventDefault();
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
-  document.getElementById("select-columns").addEventListener("submit", processCorpus);
-  document.getElementById("reprocess").addEventListener("click", processCorpus);
+  document.getElementById("select-columns").addEventListener("submit", selectColumns);
+  document.getElementById("reprocess").addEventListener("click", reprocess);
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
   document.getElementById("add-stopwords").addEventListener("submit", addManualStopwords);
   document.getElementById("add-synonyms").addEventListener("submit", addManualSynonyms);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
+  document.getElementById("download-button").addEventListener("click", download);
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
