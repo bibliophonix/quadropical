@@ -47,13 +47,13 @@ function loadSessionFile(session) {
   customStopwords         = session.customStopwords;
   removedDefaultStopwords = session.removedDefaultStopwords;
   synonyms                = session.synonyms;
-  modeler                 = session.modeler;
+  modeler                 = TopicModeler.loadFromPriorModel(session.modeler);
   topicTopWords           = session.topicTopWords;
   topicLabels             = session.topicLabels;
 
   loadStopwords(true);
   displayColumns(session.columns, session.selectedColumns);
-  processCorpus();
+  updatePage();
 }
 
 
@@ -107,11 +107,11 @@ function runModeling() {
   });
 
   initTopicModeler();
-  processCorpus();
+  updatePage();
 }
 
 
-function processCorpus() {
+function updatePage() {
   clearTopics();
   clearQuadrants();
   displayCurrentTopics();
@@ -130,12 +130,9 @@ function initTopicModeler() {
 
 function clearTopics() {
   // TODO: make these consistent by removing the empty list containers
-  d3.select("#processing-details").style("display", "block");
   d3.selectAll("#top-terms-by-topic .topic").remove();
   d3.selectAll("#term-distribution ul li").remove();
   d3.selectAll("#corpus-topics ol li").remove();
-  d3.select("#synonyms").style("display", "block");
-  d3.select("#stopwords").style("display", "block");
   d3.select("svg g.container").remove();
   d3.selectAll(".article").remove();
 }
@@ -188,6 +185,10 @@ function sweep() {
 
 
 function displayCurrentTopics() {
+  d3.select("#processing-details").style("display", "block");
+  d3.select("#synonyms").style("display", "block");
+  d3.select("#stopwords").style("display", "block");
+  d3.select("#sweeps").text(modeler.completeSweeps);
 
   d3.select("#corpus-topics").style("display", "block");
   d3.select("#corpus-topics ol")
