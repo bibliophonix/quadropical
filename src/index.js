@@ -41,6 +41,7 @@ function loadSessionFile(session) {
   session = JSON.parse(session);
 
   data                    = session.data;
+  columns                 = session.columns;
   selectedColumns         = session.selectedColumns;
   documents               = session.documents;
   stopwords               = session.stopwords;
@@ -52,6 +53,7 @@ function loadSessionFile(session) {
   topicLabels             = session.topicLabels;
 
   loadStopwords(true);
+  displaySynonyms();
   displayColumns(session.columns, session.selectedColumns);
   updatePage();
 }
@@ -451,6 +453,13 @@ function addManualSynonyms() {
   let newSynonyms = document.getElementById("manual-synonyms").value.split(/\s+/);
   let mainWord = newSynonyms.shift();
   newSynonyms.forEach(word => synonyms[word] = mainWord);
+  displaySynonyms();
+  document.getElementById("manual-synonyms").value = "";
+  event.preventDefault();
+}
+
+
+function displaySynonyms() {
   d3.selectAll(".mapped-synonym").remove();
   d3.select("#synonyms")
       .selectAll(".mapped-synonym")
@@ -459,9 +468,6 @@ function addManualSynonyms() {
       .append("p")
       .attr("class", "mapped-synonym")
       .text(d => `${d}: ${synonyms[d]}`);
-
-  document.getElementById("manual-synonyms").value = "";
-  event.preventDefault();
 }
 
 
