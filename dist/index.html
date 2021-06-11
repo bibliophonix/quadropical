@@ -47,7 +47,26 @@
           <form id="select-columns">
             <h2>Data Selection</h2>
             <p>Select the full text columns to use for your corpus:</p>
-            <ul></ul>
+            <table>
+              <thead>
+                <tr>
+                  <th>Field</th>
+                  <th>Topic Text</th>
+                  <th>Identifier</th>
+                  <th>Network Source</th>
+                  <th>Network Destination</th>
+                </tr>
+                <tr>
+                  <th class="column">(None)</th>
+                  <td></td>
+                  <td></td>
+                  <td><label><input type="radio" name="network_source" value="none"></label></td>
+                  <td><label><input type="radio" name="network_destination" value="none"></label></td>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
             <p><button>Select Columns</button></p>
           </form>
           <p id="selected-columns"></p>

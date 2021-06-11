@@ -122,20 +122,46 @@ body {
 }
 
 
-#data-preparation ul {
-  padding-left: 0;
-  -moz-column-count: 2;
-  -moz-column-gap: 20px;
-  -webkit-column-count: 2;
-  -webkit-column-gap: 20px;
-  column-count: 2;
-  column-gap: 20px;
+#select-columns table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
 
-#data-preparation ul li {
-  list-style: none;
+#select-columns table th, #select-columns table td {
+  border: 1px solid #eee;
+  padding: .5em;
+  font-size: .9em;
 }
+
+
+#select-columns table th {
+  background-color: #eee;
+  border: 1px solid #ddd;
+}
+
+#select-columns table thead th {
+  text-align: center;
+  border-bottom: 3px solid #ddd;
+}
+
+
+#select-columns table thead th.column {
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+
+#select-columns table td {
+  text-align: center;
+}
+
+
+#select-columns table tbody th.column {
+  text-align: left;
+  font-weight: bold;
+}
+
 
 #document-list .article {
   margin: auto auto 4em;

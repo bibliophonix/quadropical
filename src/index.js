@@ -15,7 +15,7 @@ const width  = 800,
       formatTimestamp = d3.timeFormat("%Y%m%dT%H%M%S%L"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
 
-let data, columns, selectedColumns,
+let data, columns, selectedColumns, idColumn, networkSource, networkDestination,
       documents,
       stopwords = defaultStopwords,
       customStopwords = [],
@@ -23,7 +23,7 @@ let data, columns, selectedColumns,
       modeler,
       topicLabels,
       topicTopWords = [],
-      references = {},
+      network = {},
       synonyms = {},
       annotationGroup = svg.append("g").attr("class", "annotations");
 
@@ -45,7 +45,10 @@ function loadSessionFile(session) {
   data                    = session.data;
   columns                 = session.columns;
   selectedColumns         = session.selectedColumns;
-  references              = session.references;
+  idColumn                = session.idColumn;
+  networkSource           = session.networkSource;
+  networkDestination      = session.networkDestination;
+  network                 = session.network;
   documents               = session.documents;
   stopwords               = session.stopwords;
   customStopwords         = session.customStopwords;
@@ -64,16 +67,6 @@ function loadSessionFile(session) {
 
 function parseAndShowCsvHeaders(contents) {
   data = d3.csvParse(contents);
-
-  // Set up a convenience Hash for tracking references. Only track references within the data set.
-  references = data.reduce((result, article) => ({...result, [article.ID] : new Array()}), {});
-  data.forEach(a => {
-    a.References.split("; ").forEach(citedId => {
-      if (references.hasOwnProperty(citedId))
-        references[citedId].push(a.ID);
-    });
-  });
-
   columns = data.columns;
   loadStopwords(true);
   displayColumns(columns);
@@ -86,18 +79,36 @@ function displayColumns(columns, selectedColumns) {
 
   d3.select("#data-preparation").style("display", "block");
 
-  let columnLabels = d3.select("#select-columns ul")
-      .selectAll("li")
-      .data(columns)
-    .enter()
-      .append("li")
-      .append("label");
+  let columnRows = d3.select("#select-columns table tbody")
+        .selectAll("tr")
+        .data(columns)
+      .enter()
+        .append("tr");
 
-  columnLabels.append("input").attr("type", "checkbox").attr("name", "columns[]").attr("value", d => d);
-  columnLabels.append("span").text(d => d);
+  columnRows.append("th").attr("class", "column").text(d => d);
+  columnRows.append("td").append("input")
+        .attr("type", "checkbox")
+        .attr("name", "columns[]")
+        .attr("value", d => d);
+  columnRows.append("td").append("label").append("input")
+        .attr("type", "radio")
+        .attr("name", "identifier")
+        .attr("value", d => d);
+  columnRows.append("td").append("label").append("input")
+        .attr("type", "radio")
+        .attr("name", "network_source")
+        .attr("value", d => d);
+  columnRows.append("td").append("label").append("input")
+        .attr("type", "radio")
+        .attr("name", "network_destination")
+        .attr("value", d => d);
 
-  if (selectedColumns !== undefined)
-    columnLabels.selectAll("input").property("checked", input => selectedColumns.includes(input));
+  if (selectedColumns !== undefined) {
+    columnRows.selectAll("input[name='columns[]']").property("checked", input => selectedColumns.includes(input));
+    columnRows.selectAll("input[name='identifier'][value='" + idColumn + "']").property("checked", true);
+    columnRows.selectAll("input[name='network_source'][value='" + networkSource + "']").property("checked", true);
+    columnRows.selectAll("input[name='network_destination'][value='" + networkDestination + "']").property("checked", true);
+  }
 }
 
 
@@ -115,12 +126,26 @@ function selectColumns(event) {
 
 
 function runModeling() {
-  selectedColumns = Array.from(document.querySelectorAll("input[name='columns[]']:checked")).map(checkbox => checkbox.value);
+  selectedColumns    = Array.from(document.querySelectorAll("input[name='columns[]']:checked")).map(checkbox => checkbox.value);
+  idColumn           = document.querySelector("input[name='identifier']:checked").value;
+  networkSource      = document.querySelector("input[name='network_source']:checked").value;
+  networkDestination = document.querySelector("input[name='network_destination']:checked").value;
   documents = data.map(csvRow => {
-    let docId = csvRow["ID"];
+    let docId   = csvRow[idColumn];
     let docDate = csvRow["Pub Year"];
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
   });
+
+  if (networkSource != "none" && networkDestination != "none") {
+    // Set up a convenience Hash for tracking network links between docs.
+    network = data.reduce((result, doc) => ({...result, [doc[networkDestination]] : new Array()}), {});
+    data.forEach(doc => {
+      doc[networkSource].split("; ").forEach(source => {
+        if (network.hasOwnProperty(source))
+          network[source].push(doc[networkDestination]);
+      });
+    });
+  }
 
   initTopicModeler();
   addDocumentReferences();
@@ -147,7 +172,7 @@ function initTopicModeler() {
 
 function addDocumentReferences() {
   modeler.documents.forEach(doc => {
-    doc.citingIds = references[doc.id];
+    doc.links = network[doc.id];
   });
 }
 
@@ -158,7 +183,7 @@ function clearTopics() {
   d3.selectAll("#term-distribution ul li").remove();
   d3.selectAll("#corpus-topics ol li").remove();
   d3.select("svg g.container").remove();
-  d3.selectAll(".article").remove();
+  d3.selectAll(".document").remove();
   document.getElementById("show-networks").checked = false;
 }
 
@@ -351,28 +376,28 @@ function displayCurrentTopics() {
     .text("T4: " + topicLabels[3]);
 
   d3.select("#document-list").style("display", "block");
-  let articles = d3.select("#document-list")
-      .selectAll(".article")
+  let documents = d3.select("#document-list")
+      .selectAll(".document")
       .data(modeler.documents)
     .enter()
       .append("div")
-      .attr("class", "article");
+      .attr("class", "document");
 
-  articles.append("p").text(d => `${d.id} (${d.date})`);
-  articles.append("p").text(d => d.originalText);
+  documents.append("p").text(d => `${d.id} (${d.date})`);
+  documents.append("p").text(d => d.originalText);
   displayArticleTopicDetails();
 }
 
 
 function displayArticleTopicDetails() {
-  let articles = d3.selectAll(".article");
+  let documents = d3.selectAll(".document");
 
-  articles.append("p")
-    .attr("class", "article-topic-scores")
+  documents.append("p")
+    .attr("class", "document-topic-scores")
     .text(d => {
       return topicTopWords.map((item, number) => `${topicLabels[number]}: ${d.topicCounts[number]}`).join("; ");
     });
-  articles.append("p").attr("class", "article-topic-coords").text(d => d.coordinates);
+  documents.append("p").attr("class", "document-topic-coords").text(d => d.coordinates);
 }
 
 
@@ -459,19 +484,19 @@ function toggleNetworks(event) {
 
     let container = d3.select("svg g.container");
     modeler.documents.forEach(doc => {
-      let articleDoc = getDocumentByArticleId(doc.id);
-      doc.citingIds.map(citingId => getDocumentByArticleId(citingId))
-          .filter(citingDoc => citingDoc !== undefined)
-          .forEach(citingDoc => {
+      let sourceDoc = getDocumentById(doc.id);
+      doc.links.map(link => getDocumentById(link))
+          .filter(linkedDoc => linkedDoc !== undefined)
+          .forEach(linkedDoc => {
             container.append("line")
               .style("stroke", "steelblue")
               .style("stroke-width", "1")
               .style("opacity", 0.33)
               .attr("class", "citing-line")
-              .attr("x1", xScale(articleDoc.coordinates.re))
-              .attr("y1", yScale(articleDoc.coordinates.im))
-              .attr("x2", xScale(citingDoc.coordinates.re))
-              .attr("y2", yScale(citingDoc.coordinates.im));
+              .attr("x1", xScale(sourceDoc.coordinates.re))
+              .attr("y1", yScale(sourceDoc.coordinates.im))
+              .attr("x2", xScale(linkedDoc.coordinates.re))
+              .attr("y2", yScale(linkedDoc.coordinates.im));
           });
     });
   } else {
@@ -480,8 +505,8 @@ function toggleNetworks(event) {
 }
 
 
-function getDocumentByArticleId(articleId) {
-  return modeler.documents.filter(doc => doc.id == articleId)[0];
+function getDocumentById(id) {
+  return modeler.documents.filter(doc => doc.id == id)[0];
 }
 
 
@@ -529,7 +554,10 @@ function download() {
       data: data,
       columns: columns,
       selectedColumns: selectedColumns,
-      references: references,
+      idColumn: idColumn,
+      networkSource: networkSource,
+      networkDestination: networkDestination,
+      network: network,
       documents: documents,
       stopwords: stopwords,
       customStopwords: customStopwords,
