@@ -34,6 +34,7 @@ function loadCsv(event) {
   let fileUpload = event.target;
   if ("files" in fileUpload) {
     const file = fileUpload.files.item(0);
+    d3.select("#current-file span").text(file.name);
     const reader = new FileReader();
     reader.addEventListener("loadend", event => file.name.endsWith(".csv") ? parseAndShowCsvHeaders(event.srcElement.result) : loadSessionFile(event.srcElement.result));
     reader.readAsText(file);
@@ -76,6 +77,7 @@ function parseAndShowCsvHeaders(contents) {
 
 
 function displayColumns(columns, selectedColumns) {
+  d3.select("#current-file").style("display", "block");
   d3.select("#download").style("display", "block");
   d3.select("#upload").style("display", "none");
 

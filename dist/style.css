@@ -16,13 +16,14 @@ body {
 
 
 #details, #processing-details, #corpus-topics, #top-terms, #main, #nav, #graph, #manage,
-#files, #upload, #download, #data-preparation, #top-terms-by-topic, #stopwords, #synonyms, .topic {
+#files, #upload, #current-file, #download, #data-preparation, #top-terms-by-topic, #stopwords, #synonyms, .topic {
   position: relative;
   float: left;
 }
 
 
-#download, #processing-details, #corpus-topics, #top-terms, #graph, #document-list, #data-preparation, #stopwords, #synonyms {
+#current-file, #download, #processing-details, #corpus-topics, #top-terms, #graph, #document-list,
+#data-preparation, #stopwords, #synonyms {
   display: none;
 }
 
@@ -31,21 +32,38 @@ body {
   width: 280px;
 }
 
-#upload, #download, #processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
+
+#upload, #processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
   width: 100%;
 }
 
 
-#upload, #download {
+#upload, #current-file, #download {
   margin-top: 2em;
 }
 
 
-#upload p, #download p {
+#current-file {
+  width: 67%;
+}
+
+
+#download {
+  width: 33%;
+}
+
+
+#upload p, #current-file p, #download p {
   position: relative;
   float: left;
   width: 100%;
   margin: .5em auto 0;
+}
+
+
+#current-file p span {
+  font-family: Menlo, "Courier New", ui-monospace;
+  font-size: .8em;
 }
 
 
