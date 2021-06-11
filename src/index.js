@@ -13,7 +13,9 @@ const width  = 800,
       xScale = d3.scaleLinear().range([margin.left, width - margin.right]),
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
       formatTimestamp = d3.timeFormat("%Y%m%dT%H%M%S%L"),
+      formatCoord     = d3.format(".2f"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
+
 
 let data, columns, selectedColumns, idColumn, networkSource, networkDestination,
       documents,
@@ -383,8 +385,8 @@ function displayCurrentTopics() {
       .append("div")
       .attr("class", "document");
 
-  documents.append("p").text(d => `${d.id} (${d.date})`);
-  documents.append("p").text(d => d.originalText);
+  documents.append("h3").text(d => `${d.id} (${d.date})`);
+  documents.append("p").text(d => d.originalText.length > 128 ? d.originalText.slice(0, 128) + "..." : d.originalText);
   displayArticleTopicDetails();
 }
 
@@ -393,11 +395,14 @@ function displayArticleTopicDetails() {
   let documents = d3.selectAll(".document");
 
   documents.append("p")
-    .attr("class", "document-topic-scores")
-    .text(d => {
-      return topicTopWords.map((item, number) => `${topicLabels[number]}: ${d.topicCounts[number]}`).join("; ");
-    });
-  documents.append("p").attr("class", "document-topic-coords").text(d => d.coordinates);
+      .attr("class", "document-topic-scores")
+      .text(d => {
+        return topicTopWords.map((item, number) => `${topicLabels[number]}: ${d.topicCounts[number]}`).join("; ");
+      });
+
+  documents.append("p").attr("class", "document-topic-coords").text(d => {
+    return "Real: " + formatCoord(d.coordinates.re) + ", Imaginary: " + formatCoord(d.coordinates.im);
+  });
 }
 
 
