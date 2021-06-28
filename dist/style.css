@@ -33,7 +33,7 @@ body {
 }
 
 
-#upload, #processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
+#processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
   width: 100%;
 }
 
@@ -44,12 +44,14 @@ body {
 
 
 #current-file {
-  width: 67%;
+  width: 65%;
+  margin-left: 2%;
 }
 
 
 #download {
-  width: 33%;
+  width: 31%;
+  margin-right: 2%;
 }
 
 
@@ -78,13 +80,10 @@ body {
 
 
 #main #nav ul {
-  /* border: 1px solid #ccc;
-  border-width: 1px 0; */
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
-  /* text-align: center; */
 }
 
 
@@ -118,14 +117,10 @@ body {
 }
 
 
-#manage>div, #manage>p, #graph>div, #graph>p {
+#upload, #manage>h2, #manage>p, #graph>div, #graph>p {
   width: 96%;
-  margin: auto 2%;
-}
-
-
-#files {
-  width: 100%;
+  margin-left: 2%;
+  margin-right: 2%;
 }
 
 
@@ -143,6 +138,7 @@ body {
 #select-columns table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 1.5em;
 }
 
 
@@ -200,17 +196,13 @@ body {
 }
 
 
-#manage #top-terms {
-  margin-top: 2em;
-}
-
-
-#manage button#reprocess {
+#topic-details {
   float: right;
+  margin-top: 1em;
 }
 
 
-#top-terms h2 {
+#top-terms h2, #stopwords h2, #synonyms h2 {
   margin-top: 0;
 }
 
@@ -280,4 +272,48 @@ body {
 
 #processing-details #network-controls {
   text-align: right;
+}
+
+
+.accordion {
+  background-color: #eee;
+  color: #444;
+  cursor: pointer;
+  padding: 2%;
+  width: 96%;
+  text-align: left;
+  border-bottom: 1px solid #fff;
+  outline: none;
+  transition: 0.4s;
+  margin-bottom: 0;
+}
+
+
+.active, .accordion:hover {
+  background-color: #ccc;
+}
+
+
+.panel {
+  width: 96%;
+  padding: 0 2% 0 2%;
+  background-color: white;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+}
+
+
+.accordion:after {
+  content: '\02795'; /* Unicode character for "plus" sign (+) */
+  font-size: 13px;
+  color: #777;
+  float: right;
+  margin-left: 5px;
+  margin-top: .5em;
+}
+
+
+.active:after {
+  content: "\2796"; /* Unicode character for "minus" sign (-) */
 }

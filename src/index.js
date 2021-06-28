@@ -446,8 +446,8 @@ function loadStopwords(firstLoad) {
          .filter(unique);
   }
 
-  d3.select("#stopwords ol").remove();
-  d3.select("#stopwords")
+  d3.select("#add-stopwords ol").remove();
+  d3.select("#add-stopwords")
       .append("ol")
       .selectAll(".stopword")
       .data(customStopwords.concat(defaultStopwords).sort())
@@ -544,7 +544,7 @@ function addManualSynonyms() {
 
 function displaySynonyms() {
   d3.selectAll(".mapped-synonym").remove();
-  d3.select("#synonyms")
+  d3.select("#add-synonyms")
       .selectAll(".mapped-synonym")
       .data(Object.keys(synonyms).sort())
     .enter()
@@ -581,6 +581,16 @@ function download() {
 }
 
 
+function toggleAccordion() {
+  this.classList.toggle("active");
+  var panel = this.nextElementSibling;
+  if (panel.style.maxHeight)
+    panel.style.maxHeight = null;
+  else
+    panel.style.maxHeight = panel.scrollHeight + "px";
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -588,11 +598,12 @@ const ready = () => {
   document.getElementById("reprocess").addEventListener("click", reprocess);
   document.getElementById("corpus-upload").addEventListener("change", loadCsv);
   document.getElementById("resweep").addEventListener("click", resweep);
-  document.getElementById("add-stopwords").addEventListener("submit", addManualStopwords);
-  document.getElementById("add-synonyms").addEventListener("submit", addManualSynonyms);
+  document.querySelector("#add-stopwords form").addEventListener("submit", addManualStopwords);
+  document.querySelector("#add-synonyms form").addEventListener("submit", addManualSynonyms);
   document.querySelectorAll("#nav ul li a").forEach(navItem => navItem.addEventListener("click", toggleNavigation));
   document.getElementById("show-networks").addEventListener("change", toggleNetworks);
   document.getElementById("download-button").addEventListener("click", download);
+  document.querySelectorAll(".accordion").forEach(sectionName => sectionName.addEventListener("click", toggleAccordion));
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
