@@ -167,7 +167,7 @@ function updatePage() {
 function initTopicModeler() {
   modeler = new TopicModeler(stopwords, documents);
   modeler.synonyms = synonyms;
-  modeler.numTopics = 4;
+  modeler.numTopics = parseInt(document.getElementById("num-topics").value);
   modeler.processCorpus();
   modeler.requestedSweeps = 100;
   sweep();
