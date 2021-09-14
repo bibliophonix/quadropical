@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { complex, add, multiply, chain, sqrt } from "mathjs";
+import { complex, add, multiply, chain, sqrt, unit, sin, cos } from "mathjs";
 import { TopicModeler } from "topical";
 import defaultStopwords from "./stopwords.js";
 import saveAs           from "./saveas.js";
@@ -224,17 +224,16 @@ function sweep() {
 
   topicLabels = topicTopWords.map((item, number) => modeler.topNWords(modeler.topicWordCounts[number], 1));
 
-  modeler.documents.forEach(doc => {
-    const topic1 = multiply(constants.rotationCoefficient, complex(doc.topicCounts[0], 0));
-    const topic2 = multiply(constants.rotationCoefficient, complex(0, doc.topicCounts[1]));
-    const topic3 = multiply(constants.rotationCoefficient, complex(-doc.topicCounts[2], 0));
-    const topic4 = multiply(constants.rotationCoefficient, complex(0, -doc.topicCounts[3]));
+  // For each rotation angle, find its complex number representation on the unit circle.
+  let sliceAngle = 360 / modeler.numTopics;
+  let rotationAngles = [...Array(modeler.numTopics).keys()].map(num => (num * sliceAngle) + (sliceAngle / 2));
+  let rotationCoefficients = rotationAngles.map(angle => complex( cos(unit(angle, "deg")), sin(unit(angle, "deg")) ));
 
-    doc.coordinates = chain(topic1)
-                        .add(topic2)
-                        .add(topic3)
-                        .add(topic4)
-                        .done();
+  // Given the rotation coefficients representing the unit circle angle positions, multiply them by the corresponding
+  // topic scores in each document, then  add them all together to determine the final coordinates.
+  modeler.documents.forEach(doc => {
+    let topicCoordinates = rotationCoefficients.map((rotateCoef, i) => multiply(rotateCoef, complex(doc.topicCounts[i], 0)));
+    doc.coordinates = topicCoordinates.reduce((previousValue, currentValue) => add(previousValue, currentValue));
   });
 }
 
