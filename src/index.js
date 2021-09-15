@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { complex, add, multiply, chain, sqrt, unit, sin, cos } from "mathjs";
+import { complex, add, multiply, chain, sqrt, unit, sin, cos, to, tan, atan } from "mathjs";
 import { TopicModeler } from "topical";
 import defaultStopwords from "./stopwords.js";
 import saveAs           from "./saveas.js";
@@ -8,7 +8,7 @@ import saveAs           from "./saveas.js";
 // GLOBALS
 const width  = 800,
       height = 700,
-      margin = {top: 30, bottom: 50, left: 50, right: 50},
+      margin = {top: 0, bottom: 0, left: 0, right: 0},
       constants = {radii: [0, 15], rotationCoefficient: complex((1 / sqrt(2)), (1 / sqrt(2)))},
       xScale = d3.scaleLinear().range([margin.left, width - margin.right]),
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
@@ -27,7 +27,8 @@ let data, columns, selectedColumns, idColumn, networkSource, networkDestination,
       topicTopWords = [],
       network = {},
       synonyms = {},
-      annotationGroup = svg.append("g").attr("class", "annotations");
+      annotationGroup = svg.append("g").attr("class", "annotations"),
+      origin, firstCornerAngle, secondCornerAngle, thirdCornerAngle, fourthCornerAngle;
 
 
 function loadCsv(event) {
@@ -196,6 +197,7 @@ function clearQuadrants() {
   d3.selectAll(".axis").remove();
   d3.selectAll(".quadrant-axis").remove();
   d3.selectAll(".quadrant-label").remove();
+  d3.selectAll(".slice-cut").remove();
 }
 
 
@@ -219,10 +221,11 @@ function sweep() {
   document.getElementById("time").innerHTML = (finish - start) + "ms";
 
   // Pull out the top words from the topics
+  topicTopWords = [];
   for (let topic = 0; topic < modeler.numTopics; topic++)
     topicTopWords[topic] = modeler.topNWords(modeler.topicWordCounts[topic], 20);
 
-  topicLabels = topicTopWords.map((item, number) => modeler.topNWords(modeler.topicWordCounts[number], 1));
+  topicLabels = topicTopWords.map(topWords => topWords.split(" ")[0]);
 
   // For each rotation angle, find its complex number representation on the unit circle.
   let sliceAngle = 360 / modeler.numTopics;
@@ -243,6 +246,7 @@ function displayCurrentTopics() {
   d3.select("#synonyms").style("display", "block");
   d3.select("#stopwords").style("display", "block");
   d3.select("#sweeps").text(modeler.completeSweeps);
+  document.querySelector("select#num-topics").value = modeler.numTopics;
 
   d3.select("#corpus-topics").style("display", "block");
   d3.select("#corpus-topics ol")
@@ -319,64 +323,9 @@ function displayCurrentTopics() {
     // TODO
     .attr("r", "5");
 
-  svg.append("g").attr("class", "axis x-axis")
-    .attr("transform", `translate(0, ${height - margin.bottom})`)
-    .call(xAxis)
-    .append("text")
-    .attr("class", "label")
-    .text("X Axis")
-    .attr("dy", "3em")
-    .attr("x", "50%");
-
-  svg.append("g").attr("class", "axis y-axis")
-    .attr("transform", `translate(${margin.left}, 0)`)
-    .call(yAxis)
-    .append("text")
-    .attr("class", "label")
-    .text("Y Axis")
-    .attr("y", "50%")
-    .attr("dx", "-3em");
-
-  // add quadrant lines and labels
-  annotationGroup.append("path")
-    .attr("class", "quadrant-axis")
-    .attr("stroke","grey")
-    .attr("transform",`translate(${xScale(0)},0)`)
-    .attr("d", `M 0 ${margin.top} L 0 ${height - margin.bottom}`)
-
-  annotationGroup.append("path")
-    .attr("class", "quadrant-axis")
-    .attr("stroke","grey")
-    .attr("transform",`translate(0,${yScale(0)})`)
-    .attr("d", `M ${margin.left} 0  L ${width - margin.right} 0`)
-
-  annotationGroup.append("text")
-    .attr("class", "quadrant-label")
-    .attr("x", width - margin.right)
-    .attr("y", margin.top * 2)
-    .style("text-anchor", "end")
-    .text("T1: " + topicLabels[0]);
-
-  annotationGroup.append("text")
-    .attr("class", "quadrant-label")
-    .attr("x", margin.left * 1.5)
-    .attr("y", margin.top * 2)
-    .style("text-anchor", "start")
-    .text("T2: " + topicLabels[1]);
-
-  annotationGroup.append("text")
-    .attr("class", "quadrant-label")
-    .attr("x", margin.left * 1.5)
-    .attr("y", height * .9)
-    .style("text-anchor", "start")
-    .text("T3: " + topicLabels[2]);
-
-  annotationGroup.append("text")
-    .attr("class", "quadrant-label")
-    .attr("x", width - margin.right)
-    .attr("y", height * .9)
-    .style("text-anchor", "end")
-    .text("T4: " + topicLabels[3]);
+  origin = {x: xScale(0), y: yScale(0)};
+  let sliceAngles = [...Array(modeler.numTopics).keys()].map(num => num * (360 / modeler.numTopics));
+  addSliceLines(sliceAngles, annotationGroup);
 
   d3.select("#document-list").style("display", "block");
   let documents = d3.select("#document-list")
@@ -389,6 +338,103 @@ function displayCurrentTopics() {
   documents.append("h3").text(d => `${d.id} (${d.date})`);
   documents.append("p").text(d => d.originalText.length > 128 ? d.originalText.slice(0, 128) + "..." : d.originalText);
   displayArticleTopicDetails();
+}
+
+
+function addSliceLines(angles, container) {
+  // First, determine the angles from the current origin to the bounding rectangle's corners (sohcahTOA)
+
+  let opposite1 = origin.y;
+  let adjacent1 = width - origin.x;
+  let tangent1  = opposite1 / adjacent1;
+  firstCornerAngle = to(unit(atan(tangent1), 'rad'), 'deg').toNumber();
+
+  let opposite2 = origin.y;
+  let adjacent2 = origin.x;
+  let tangent2  = opposite2 / adjacent2;
+  secondCornerAngle = 90 + to(unit(atan(tangent2), 'rad'), 'deg').toNumber();
+
+  let opposite3 = height - origin.y;
+  let adjacent3 = origin.x;
+  let tangent3  = opposite3 / adjacent3;
+  thirdCornerAngle = 180 + to(unit(atan(tangent3), 'rad'), 'deg').toNumber();
+
+  let opposite4 = height - origin.y;
+  let adjacent4 = width  - origin.x;
+  let tangent4  = opposite4 / adjacent4;
+  fourthCornerAngle = 270 + to(unit(atan(tangent4), 'rad'), 'deg').toNumber();
+
+  // Then process each angle
+
+  angles.forEach(angle => {
+    // Which octile am I in? Intercept with the right, top, left or bottom edge?
+    let x, y, octile;
+    let quantileTangent = tan(unit(angle, 'deg'));
+
+    if (angle <= firstCornerAngle) {
+      // Octile 1
+      octile = 1;
+      x = width - origin.x;
+      y = quantileTangent * x * -1;
+    } else if (angle <= 90) {
+      // Octile 2
+      octile = 2;
+      y = -origin.y;
+      x = (y / quantileTangent) * -1;
+    } else if (angle <= secondCornerAngle) {
+      // Octile 3
+      octile = 3;
+      y = -origin.y;
+      x = (y / quantileTangent) * -1;
+    } else if (angle <= 180) {
+      // Octile 4
+      octile = 4;
+      x = -origin.x;
+      y = quantileTangent * x * -1;
+    } else if (angle <= thirdCornerAngle) {
+      // Octile 5
+      octile = 5;
+      x = -origin.x;
+      y = quantileTangent * x * -1;
+    } else if (angle <= 270) {
+      // Octile 6
+      octile = 6;
+      y = width - origin.y;
+      x = (y / quantileTangent) * -1;
+    } else if (angle <= fourthCornerAngle) {
+      // Octile 7
+      octile = 7;
+      y = width - origin.y;
+      x = (y / quantileTangent) * -1;
+    } else {
+      // Octile 8
+      octile = 8;
+      x = width - origin.x;
+      y = quantileTangent * x * -1;
+    }
+
+    // Offset point to by the origin amounts, and...
+    let point2 = {x: x + origin.x, y: y + origin.y};
+
+    // Reset point boundaries to the rectangular bounding box as needed
+    if (octile == 1 || octile == 8)
+      point2.x = width - margin.right;
+    else if (octile == 2 || octile == 3)
+      point2.y = margin.top;
+    else if (octile == 4 || octile == 5)
+      point2.x = margin.left;
+    else if (octile == 6 || octile == 7)
+      point2.y = height - margin.bottom;
+
+    container.append("g")
+      .append("line")
+      .attr("class", "slice-cut")
+      .attr("id", "angle-" + angle)
+      .attr("x1", origin.x)
+      .attr("y1", origin.y)
+      .attr("x2", point2.x)
+      .attr("y2", point2.y);
+  });
 }
 
 
@@ -497,7 +543,7 @@ function toggleNetworks(event) {
             container.append("line")
               .style("stroke", "steelblue")
               .style("stroke-width", "1")
-              .style("opacity", 0.33)
+              .style("opacity", 0.2)
               .attr("class", "citing-line")
               .attr("x1", xScale(sourceDoc.coordinates.re))
               .attr("y1", yScale(sourceDoc.coordinates.im))

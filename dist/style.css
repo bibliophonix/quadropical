@@ -317,3 +317,10 @@ body {
 .active:after {
   content: "\2796"; /* Unicode character for "minus" sign (-) */
 }
+
+
+line.slice-cut {
+  stroke: red;
+  stroke-width: 1;
+  opacity: 0.33;
+}
