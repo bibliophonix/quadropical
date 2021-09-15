@@ -322,5 +322,12 @@ body {
 line.slice-cut {
   stroke: red;
   stroke-width: 1;
-  opacity: 0.33;
+  opacity: 0.3;
+}
+
+
+g.slice-label text {
+  font-weight: bold;
+  opacity: 0.3;
+  fill: red;
 }

@@ -200,6 +200,7 @@ function clearQuadrants() {
   d3.selectAll(".quadrant-axis").remove();
   d3.selectAll(".quadrant-label").remove();
   d3.selectAll(".slice-cut").remove();
+  d3.selectAll(".slice-label").remove();
 }
 
 
@@ -382,7 +383,7 @@ function addSliceLines(angles, container) {
 
   // Then process each angle
 
-  angles.forEach(angle => {
+  angles.forEach((angle, i) => {
     // Which octile am I in? Intercept with the right, top, left or bottom edge?
     let x, y, octile;
     let quantileTangent = tan(unit(angle, 'deg'));
@@ -450,6 +451,18 @@ function addSliceLines(angles, container) {
       .attr("y1", origin.y)
       .attr("x2", point2.x)
       .attr("y2", point2.y);
+
+    let labelAngle = angle + (angles[1] / 2);
+    let labelPoint = {
+      x: (origin.y * 0.8) * cos(unit(-labelAngle, "deg")) + origin.x,
+      y: (origin.y * 0.8) * sin(unit(-labelAngle, "deg")) + origin.y
+    }
+
+    container.append("g")
+      .attr("transform", d => `translate(${labelPoint.x - 40}, ${labelPoint.y})`)
+      .attr("class", "slice-label")
+      .append("text")
+      .text("T" + (i + 1) + ": " + topicLabels[i]);
   });
 }
 
