@@ -12,6 +12,7 @@ const width  = 800,
       constants = {radii: [0, 15], rotationCoefficient: complex((1 / sqrt(2)), (1 / sqrt(2)))},
       xScale = d3.scaleLinear().range([margin.left, width - margin.right]),
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
+      radius = d3.scaleSqrt().range([2, 25]),
       formatTimestamp = d3.timeFormat("%Y%m%dT%H%M%S%L"),
       formatCoord     = d3.format(".2f"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
@@ -313,19 +314,11 @@ function displayCurrentTopics() {
   xScale.domain(d3.extent(modeler.documents, d => d.coordinates.re));
   yScale.domain(d3.extent(modeler.documents, d => d.coordinates.im));
 
-
   // TODO: pick a real data point for the color
   const colorScale = d3.scaleSequential(d3.interpolateBuPu)
     .domain(d3.extent(modeler.documents, d => d.coordinates.re));
 
-
-  // TODO: pick a real data point for the color
-  const sizeScale = d3.scaleSqrt()
-    .domain(d3.extent(modeler.documents, d => d.coordinates.re))
-    .range(constants.radii);
-
-  const xAxis = d3.axisBottom(xScale);
-  const yAxis = d3.axisLeft(yScale);
+  radius.domain([0, d3.max(Object.values(network).map(citations => citations.length))]);
 
   const dotgroups = svg.append("g").attr("class", "container")
       .selectAll(".dot")
@@ -336,9 +329,8 @@ function displayCurrentTopics() {
 
   dotgroups.append("circle")
     .attr("fill", "lightgrey")
-    .attr("opacity", 0.6)
-    // TODO
-    .attr("r", "5");
+    .attr("opacity", 0.8)
+    .attr("r", d => radius(network[d.id].length));
 
   origin = {x: xScale(0), y: yScale(0)};
   let sliceAngles = [...Array(modeler.numTopics).keys()].map(num => num * (360 / modeler.numTopics));
@@ -572,7 +564,7 @@ function toggleNetworks(event) {
             container.append("line")
               .style("stroke", "steelblue")
               .style("stroke-width", "1")
-              .style("opacity", 0.2)
+              .style("opacity", 0.1)
               .attr("class", "citing-line")
               .attr("x1", xScale(sourceDoc.coordinates.re))
               .attr("y1", yScale(sourceDoc.coordinates.im))
