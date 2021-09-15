@@ -120,6 +120,8 @@ function displayColumns(columns, selectedColumns) {
 function reprocess(event) {
   loadStopwords(false);
   runModeling();
+  let panel = document.querySelector("#current-topics")
+  panel.style.maxHeight = panel.scrollHeight + "px";
   event.preventDefault();
 }
 
@@ -597,6 +599,8 @@ function addManualSynonyms() {
   newSynonyms.forEach(word => synonyms[word] = mainWord);
   displaySynonyms();
   document.getElementById("manual-synonyms").value = "";
+  let panel = document.querySelector("#add-synonyms")
+  panel.style.maxHeight = panel.scrollHeight + "px";
   event.preventDefault();
 }
 
