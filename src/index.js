@@ -234,9 +234,23 @@ function sweep() {
 
   // Given the rotation coefficients representing the unit circle angle positions, multiply them by the corresponding
   // topic scores in each document, then  add them all together to determine the final coordinates.
-  modeler.documents.forEach(doc => {
-    let topicCoordinates = rotationCoefficients.map((rotateCoef, i) => multiply(rotateCoef, complex(doc.topicCounts[i], 0)));
-    doc.coordinates = topicCoordinates.reduce((previousValue, currentValue) => add(previousValue, currentValue));
+  modeler.documents.forEach((doc, j) => {
+    // Start by finding only the topics that were scored greater than 0 for the current document while
+    // being sure to maintain the score index so it lines up with rotation angle indices.
+    let scoredTopics = doc.topicCounts.reduce((scoredTopics, topicScore, i) => {
+      if (topicScore > 0) scoredTopics[i] = topicScore;
+      return scoredTopics;
+    }, {});
+
+    // For each scored topic for the current document, rotate it by its corresponding rotation coefficient...
+    let scoredTopicCoordinates = Object.keys(scoredTopics).map(topicIndex => {
+      return multiply(rotationCoefficients[topicIndex], complex(scoredTopics[topicIndex], 0));
+    });
+
+    // Finally compute the final coordinates by summing all the scored topics.
+    doc.coordinates = scoredTopicCoordinates.reduce((previousValue, currentValue) => {
+      return add(previousValue, currentValue);
+    }, complex(0, 0));
   });
 }
 
