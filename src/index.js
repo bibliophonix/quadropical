@@ -9,7 +9,6 @@ import saveAs           from "./saveas.js";
 const width  = 800,
       height = 700,
       margin = {top: 0, bottom: 0, left: 0, right: 0},
-      constants = {radii: [0, 15], rotationCoefficient: complex((1 / sqrt(2)), (1 / sqrt(2)))},
       xScale = d3.scaleLinear().range([margin.left, width - margin.right]),
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
       radius = d3.scaleSqrt().range([2, 25]),
@@ -31,6 +30,17 @@ let data, columns, selectedColumns, idColumn, networkSource, networkDestination,
       annotationGroup = svg.append("g").attr("class", "annotations"),
       origin, firstCornerAngle, secondCornerAngle, thirdCornerAngle, fourthCornerAngle;
 
+
+const topicCountLabels = {
+  "3":  "Triopical",
+  "4":  "Quadropical",
+  "5":  "Quintopical",
+  "6":  "Hexopical",
+  "7":  "Septopical",
+  "8":  "Octopical",
+  "9":  "Nonopical",
+  "10": "Decopical"
+}
 
 function loadCsv(event) {
   let fileUpload = event.target;
@@ -67,6 +77,7 @@ function loadSessionFile(session) {
   displaySynonyms();
   displayColumns(session.columns, session.selectedColumns);
   updatePage();
+  showTopics();
 }
 
 
@@ -121,9 +132,14 @@ function displayColumns(columns, selectedColumns) {
 function reprocess(event) {
   loadStopwords(false);
   runModeling();
+  showTopics();
+  event.preventDefault();
+}
+
+
+function showTopics() {
   let panel = document.querySelector("#current-topics")
   panel.style.maxHeight = panel.scrollHeight + "px";
-  event.preventDefault();
 }
 
 
@@ -165,6 +181,7 @@ function updatePage() {
   clearTopics();
   clearQuadrants();
   displayCurrentTopics();
+  updateTitle();
 }
 
 
@@ -659,6 +676,12 @@ function toggleAccordion() {
 }
 
 
+function updateTitle() {
+  let numTopics = document.getElementById("num-topics").value;
+  document.querySelector("#details>h1").textContent = topicCountLabels[numTopics];
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -672,6 +695,7 @@ const ready = () => {
   document.getElementById("show-networks").addEventListener("change", toggleNetworks);
   document.getElementById("download-button").addEventListener("click", download);
   document.querySelectorAll(".accordion").forEach(sectionName => sectionName.addEventListener("click", toggleAccordion));
+  document.getElementById("num-topics").addEventListener("change", updateTitle);
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
