@@ -580,9 +580,9 @@ function toggleNetworks(event) {
           .filter(linkedDoc => linkedDoc !== undefined)
           .forEach(linkedDoc => {
             container.append("line")
-              .style("stroke", "grey")
+              .style("stroke", color(doc.highestScore.topicIndex))
               .style("stroke-width", "1")
-              .style("opacity", 0.11)
+              .style("opacity", 0.2)
               .attr("class", "citing-line")
               .attr("x1", xScale(sourceDoc.coordinates.re))
               .attr("y1", yScale(sourceDoc.coordinates.im))
