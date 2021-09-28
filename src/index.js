@@ -12,6 +12,7 @@ const width  = 800,
       xScale = d3.scaleLinear().range([margin.left, width - margin.right]),
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
       radius = d3.scaleSqrt().range([2, 25]),
+      color  = d3.scaleOrdinal(d3.schemeCategory10),
       formatTimestamp = d3.timeFormat("%Y%m%dT%H%M%S%L"),
       formatCoord     = d3.format(".2f"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
@@ -258,8 +259,12 @@ function sweep() {
   modeler.documents.forEach((doc, j) => {
     // Start by finding only the topics that were scored greater than 0 for the current document while
     // being sure to maintain the score index so it lines up with rotation angle indices.
+    doc.highestScore = {score: -1, topicIndex: -1};
     let scoredTopics = doc.topicCounts.reduce((scoredTopics, topicScore, i) => {
-      if (topicScore > 0) scoredTopics[i] = topicScore;
+      if (topicScore > 0) {
+        scoredTopics[i] = topicScore;
+        if (topicScore > doc.highestScore.score) doc.highestScore = {score: topicScore, topicIndex: i};
+      }
       return scoredTopics;
     }, {});
 
@@ -330,11 +335,6 @@ function displayCurrentTopics() {
 
   xScale.domain(d3.extent(modeler.documents, d => d.coordinates.re));
   yScale.domain(d3.extent(modeler.documents, d => d.coordinates.im));
-
-  // TODO: pick a real data point for the color
-  const colorScale = d3.scaleSequential(d3.interpolateBuPu)
-    .domain(d3.extent(modeler.documents, d => d.coordinates.re));
-
   radius.domain([0, d3.max(Object.values(network).map(citations => citations.length))]);
 
   const dotgroups = svg.append("g").attr("class", "container")
@@ -345,8 +345,8 @@ function displayCurrentTopics() {
       .attr("transform", d => `translate(${xScale(d.coordinates.re)}, ${yScale(d.coordinates.im)})`);
 
   dotgroups.append("circle")
-    .attr("fill", "lightgrey")
-    .attr("opacity", 0.8)
+    .attr("fill", d => color(d.highestScore.topicIndex))
+    .attr("opacity", 0.5)
     .attr("r", d => radius(network[d.id].length));
 
   origin = {x: xScale(0), y: yScale(0)};
@@ -471,7 +471,8 @@ function addSliceLines(angles, container) {
       .attr("transform", d => `translate(${labelPoint.x - 40}, ${labelPoint.y})`)
       .attr("class", "slice-label")
       .append("text")
-      .text("T" + (i + 1) + ": " + topicLabels[i]);
+      .text("T" + (i + 1) + ": " + topicLabels[i])
+      .attr("fill", color(i));
   });
 }
 
@@ -579,9 +580,9 @@ function toggleNetworks(event) {
           .filter(linkedDoc => linkedDoc !== undefined)
           .forEach(linkedDoc => {
             container.append("line")
-              .style("stroke", "steelblue")
+              .style("stroke", "grey")
               .style("stroke-width", "1")
-              .style("opacity", 0.1)
+              .style("opacity", 0.11)
               .attr("class", "citing-line")
               .attr("x1", xScale(sourceDoc.coordinates.re))
               .attr("y1", yScale(sourceDoc.coordinates.im))
