@@ -326,6 +326,12 @@ line.slice-cut {
 }
 
 
+line.score-line {
+  stroke-width: 2;
+  opacity: 0.8;
+}
+
+
 g.slice-label text {
   font-weight: bold;
   opacity: 0.6;

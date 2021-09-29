@@ -220,6 +220,7 @@ function clearQuadrants() {
   d3.selectAll(".quadrant-label").remove();
   d3.selectAll(".slice-cut").remove();
   d3.selectAll(".slice-label").remove();
+  d3.selectAll(".score-line").remove();
 }
 
 
@@ -268,13 +269,15 @@ function sweep() {
       return scoredTopics;
     }, {});
 
-    // For each scored topic for the current document, rotate it by its corresponding rotation coefficient...
-    let scoredTopicCoordinates = Object.keys(scoredTopics).map(topicIndex => {
-      return multiply(rotationCoefficients[topicIndex], complex(scoredTopics[topicIndex], 0));
-    });
+    // For each scored topic for the current document, rotate it by its corresponding rotation coefficient
+    // and index it by its topic index...
+    doc.scoredTopicCoordinates = Object.keys(scoredTopics).reduce((map, topicIndex) => {
+      map[topicIndex] = multiply(rotationCoefficients[topicIndex], complex(scoredTopics[topicIndex], 0));
+      return map;
+    }, {});
 
     // Finally compute the final coordinates by summing all the scored topics.
-    doc.coordinates = scoredTopicCoordinates.reduce((previousValue, currentValue) => {
+    doc.coordinates = Object.values(doc.scoredTopicCoordinates).reduce((previousValue, currentValue) => {
       return add(previousValue, currentValue);
     }, complex(0, 0));
   });
@@ -345,9 +348,11 @@ function displayCurrentTopics() {
       .attr("transform", d => `translate(${xScale(d.coordinates.re)}, ${yScale(d.coordinates.im)})`);
 
   dotgroups.append("circle")
+    .attr("class", "node")
     .attr("fill", d => color(d.highestScore.topicIndex))
     .attr("opacity", 0.5)
-    .attr("r", d => radius(network[d.id].length));
+    .attr("r", d => radius(network[d.id].length))
+    .on("click", (event, d) => showFingerprint(d));
 
   origin = {x: xScale(0), y: yScale(0)};
   let sliceAngles = [...Array(modeler.numTopics).keys()].map(num => num * (360 / modeler.numTopics));
@@ -364,6 +369,55 @@ function displayCurrentTopics() {
   documents.append("h3").text(d => `${d.id} (${d.date})`);
   documents.append("p").text(d => d.originalText.length > 128 ? d.originalText.slice(0, 128) + "..." : d.originalText);
   displayArticleTopicDetails();
+
+  d3.selectAll("svg").on("click", (e, d) => {
+    switch(e.target.nodeName) {
+      case "circle":
+        break;
+      default:
+        resetNodeColors();
+    }
+  });
+}
+
+
+function showFingerprint(d) {
+  resetNodeColors();
+
+  // Gray out all other dots
+  d3.selectAll(".node")
+    .filter(node => node.id != d.id)
+    .attr("fill", "lightgrey");
+
+  // Draw a color coded line to each score
+  let areaPoints = Object.keys(d.scoredTopicCoordinates).map(topicIndex => {
+    let score = d.scoredTopicCoordinates[topicIndex];
+    return {x: xScale(score.re), y: yScale(score.im), topicIndex: topicIndex};
+  });
+
+  areaPoints.forEach(point => {
+    svg.append("line")
+      .attr("class", "score-line")
+      .attr("x1", xScale(d.coordinates.re))
+      .attr("y1", yScale(d.coordinates.im))
+      .attr("x2", point.x)
+      .attr("y2", point.y)
+      .attr("stroke", color(point.topicIndex));
+
+    svg.append("line")
+      .attr("class", "score-line")
+      .attr("x1", origin.x)
+      .attr("y1", origin.y)
+      .attr("x2", point.x)
+      .attr("y2", point.y)
+      .attr("stroke", color(point.topicIndex));
+  });
+}
+
+
+function resetNodeColors() {
+  d3.selectAll(".score-line").remove();
+  d3.selectAll(".node").attr("fill", d => color(d.highestScore.topicIndex));
 }
 
 
