@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { complex, add, multiply, chain, sqrt, unit, sin, cos, to, tan, atan } from "mathjs";
+import { complex, add, subtract, multiply, chain, sqrt, unit, sin, cos, to, tan, atan } from "mathjs";
 import { TopicModeler } from "topical";
 import defaultStopwords from "./stopwords.js";
 import saveAs           from "./saveas.js";
@@ -13,7 +13,8 @@ const width  = 800,
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
       radius = d3.scaleSqrt().range([2, 25]),
       color  = d3.scaleOrdinal(d3.schemeCategory10),
-      fingerPrintIntensity = d3.scaleLinear().range([0.3, 0.85]),
+      white  = [255, 255, 255],
+      fingerprintIntensity = d3.scaleLinear().range([0.33, 1.0]),
       formatTimestamp      = d3.timeFormat("%Y%m%dT%H%M%S%L"),
       formatCoord          = d3.format(".2f"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
@@ -341,7 +342,7 @@ function displayCurrentTopics() {
   xScale.domain(d3.extent(modeler.documents, d => d.coordinates.re));
   yScale.domain(d3.extent(modeler.documents, d => d.coordinates.im));
   radius.domain([0, d3.max(Object.values(network).map(citations => citations.length))]);
-  fingerPrintIntensity.domain([0, d3.max(modeler.documents, d => d.highestScore.score)]);
+  fingerprintIntensity.domain([0, d3.max(modeler.documents, d => d.highestScore.score)]);
 
   const dotgroups = svg.append("g").attr("class", "container")
       .selectAll(".dot")
@@ -407,7 +408,7 @@ function showFingerprint(d) {
       .attr("x2", topicPoint.x)
       .attr("y2", topicPoint.y)
       .attr("stroke", color(topicPoint.topicIndex))
-      .attr("opacity", fingerPrintIntensity(topicPoint.rawScore));
+      .attr("opacity", fingerprintIntensity(topicPoint.rawScore));
 
     svg.append("line")
       .attr("class", "score-line")
@@ -416,7 +417,7 @@ function showFingerprint(d) {
       .attr("x2", topicPoint.x)
       .attr("y2", topicPoint.y)
       .attr("stroke", color(topicPoint.topicIndex))
-      .attr("opacity", fingerPrintIntensity(topicPoint.rawScore));
+      .attr("opacity", fingerprintIntensity(topicPoint.rawScore));
   });
 
   topicPoints.forEach(topicPoint => {
@@ -432,9 +433,28 @@ function showFingerprint(d) {
     svg.append("path")
       .attr("class", "topical-fingerprint")
       .attr("d", trianglePathString)
-      .attr("fill", color(topicPoint.topicIndex))
-      .attr("opacity", fingerPrintIntensity(topicPoint.rawScore));
+      .attr("fill", fingerprintTopicColor(topicPoint))
+      .attr("opacity", 0.9);
   });
+}
+
+
+/**
+  Given a color, blend it with the color white by a percentage inverse to to the current topic's score.
+  Algorithm:
+
+  blendedcolor = inputcolorRGBvalue + (whiteRGBvalue - inputcolorRGBvalue) * percentage
+*/
+function fingerprintTopicColor(topicPoint) {
+  let lightness  = 1.0 - fingerprintIntensity(topicPoint.rawScore);
+  let topicColor = d3.rgb(color(topicPoint.topicIndex));
+  let fadedColor = chain(white)
+                    .subtract([topicColor.r, topicColor.g, topicColor.b])
+                    .multiply(lightness)
+                    .add([topicColor.r, topicColor.g, topicColor.b])
+                    .done();
+
+  return d3.rgb(...fadedColor);
 }
 
 
