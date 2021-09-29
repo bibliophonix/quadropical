@@ -13,8 +13,9 @@ const width  = 800,
       yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]),
       radius = d3.scaleSqrt().range([2, 25]),
       color  = d3.scaleOrdinal(d3.schemeCategory10),
-      formatTimestamp = d3.timeFormat("%Y%m%dT%H%M%S%L"),
-      formatCoord     = d3.format(".2f"),
+      fingerPrintIntensity = d3.scaleLinear().range([0.3, 0.85]),
+      formatTimestamp      = d3.timeFormat("%Y%m%dT%H%M%S%L"),
+      formatCoord          = d3.format(".2f"),
       svg = d3.select("svg").attr("width", width).attr("height", height);
 
 
@@ -221,6 +222,7 @@ function clearQuadrants() {
   d3.selectAll(".slice-cut").remove();
   d3.selectAll(".slice-label").remove();
   d3.selectAll(".score-line").remove();
+  resetNodeColors();
 }
 
 
@@ -339,6 +341,7 @@ function displayCurrentTopics() {
   xScale.domain(d3.extent(modeler.documents, d => d.coordinates.re));
   yScale.domain(d3.extent(modeler.documents, d => d.coordinates.im));
   radius.domain([0, d3.max(Object.values(network).map(citations => citations.length))]);
+  fingerPrintIntensity.domain([0, d3.max(modeler.documents, d => d.highestScore.score)]);
 
   const dotgroups = svg.append("g").attr("class", "container")
       .selectAll(".dot")
@@ -387,36 +390,57 @@ function showFingerprint(d) {
   // Gray out all other dots
   d3.selectAll(".node")
     .filter(node => node.id != d.id)
-    .attr("fill", "lightgrey");
+    .attr("fill", "lightgrey")
+    .attr("opacity", 0.33);
 
   // Draw a color coded line to each score
-  let areaPoints = Object.keys(d.scoredTopicCoordinates).map(topicIndex => {
+  let topicPoints = Object.keys(d.scoredTopicCoordinates).map(topicIndex => {
     let score = d.scoredTopicCoordinates[topicIndex];
-    return {x: xScale(score.re), y: yScale(score.im), topicIndex: topicIndex};
-  });
+    return {x: xScale(score.re), y: yScale(score.im), topicIndex: topicIndex, rawScore: d.topicCounts[topicIndex]};
+  }).sort((a, b) => (a.rawScore > b.rawScore) ? 1 : ((b.rawScore > a.rawScore) ? -1 : 0));
 
-  areaPoints.forEach(point => {
+  topicPoints.forEach(topicPoint => {
     svg.append("line")
       .attr("class", "score-line")
       .attr("x1", xScale(d.coordinates.re))
       .attr("y1", yScale(d.coordinates.im))
-      .attr("x2", point.x)
-      .attr("y2", point.y)
-      .attr("stroke", color(point.topicIndex));
+      .attr("x2", topicPoint.x)
+      .attr("y2", topicPoint.y)
+      .attr("stroke", color(topicPoint.topicIndex))
+      .attr("opacity", fingerPrintIntensity(topicPoint.rawScore));
 
     svg.append("line")
       .attr("class", "score-line")
       .attr("x1", origin.x)
       .attr("y1", origin.y)
-      .attr("x2", point.x)
-      .attr("y2", point.y)
-      .attr("stroke", color(point.topicIndex));
+      .attr("x2", topicPoint.x)
+      .attr("y2", topicPoint.y)
+      .attr("stroke", color(topicPoint.topicIndex))
+      .attr("opacity", fingerPrintIntensity(topicPoint.rawScore));
+  });
+
+  topicPoints.forEach(topicPoint => {
+    let nodePoint = {x: xScale(d.coordinates.re), y: yScale(d.coordinates.im)};
+    let trianglePoints = [origin, topicPoint, nodePoint];
+    let trianglePathString = trianglePoints.reduce((pathString, point, i, arr) => {
+      pathString += (i == 0) ? "M" : "L";
+      pathString += point.x + " " + point.y + " ";
+      pathString += (i == arr.length - 1) ? "Z" : "";
+      return pathString;
+    }, "");
+
+    svg.append("path")
+      .attr("class", "topical-fingerprint")
+      .attr("d", trianglePathString)
+      .attr("fill", color(topicPoint.topicIndex))
+      .attr("opacity", fingerPrintIntensity(topicPoint.rawScore));
   });
 }
 
 
 function resetNodeColors() {
   d3.selectAll(".score-line").remove();
+  d3.selectAll(".topical-fingerprint").remove();
   d3.selectAll(".node").attr("fill", d => color(d.highestScore.topicIndex));
 }
 
@@ -625,6 +649,7 @@ function toggleStopword(event) {
 
 
 function toggleNetworks(event) {
+  resetNodeColors();
   if (event.target.checked) {
 
     let container = d3.select("svg g.container");
