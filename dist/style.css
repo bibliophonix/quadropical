@@ -15,14 +15,14 @@ body {
 }
 
 
-#details, #processing-details, #corpus-topics, #top-terms, #main, #nav, #graph, #manage,
+#details, #processing-details, #corpus-topics, #selected-node, #top-terms, #main, #nav, #graph, #manage,
 #files, #upload, #current-file, #download, #data-preparation, #top-terms-by-topic, #stopwords, #synonyms, .topic {
   position: relative;
   float: left;
 }
 
 
-#current-file, #download, #processing-details, #corpus-topics, #top-terms, #graph, #document-list,
+#current-file, #download, #processing-details, #corpus-topics, #selected-node, #top-terms, #graph, #document-list,
 #data-preparation, #stopwords, #synonyms {
   display: none;
 }
@@ -33,7 +33,7 @@ body {
 }
 
 
-#processing-details, #corpus-topics, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
+#processing-details, #corpus-topics, #selected-node, #top-terms, #data-preparation, #nav, #files, #top-terms-by-topic {
   width: 100%;
 }
 
@@ -129,9 +129,28 @@ body {
 }
 
 
-#corpus-topics ol {
+#corpus-topics ol, #selected-node ol {
   margin-left: 0;
   padding-left: 25px;
+}
+
+
+#selected-node h2 {
+  font-size: 1.2em;
+}
+
+
+#selected-node ol {
+  display: inline;
+  list-style: none;
+  padding-left: 0;
+}
+
+
+#selected-node ol li {
+  display: inline;
+  margin-right: 4px;
+  font-weight: bold;
 }
 
 

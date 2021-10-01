@@ -13,6 +13,15 @@
       <h2>Corpus Topics</h2>
       <ol></ol>
     </div>
+    <div id="selected-node">
+      <h2>Current Node</h2>
+      <p class="id"><strong>ID:</strong> <span></span></p>
+      <p class="label"><strong>Label:</strong> <span></span></p>
+      <div class="scores">
+        <strong>Topic Scores:</strong>
+        <ol></ol>
+      </div>
+    </div>
   </div>
 
   <div id="main">
@@ -58,6 +67,7 @@
                   <th>Field</th>
                   <th>Topic Text</th>
                   <th>Identifier</th>
+                  <th>Label</th>
                   <th>Network Source</th>
                   <th>Network Destination</th>
                 </tr>
@@ -65,8 +75,9 @@
                   <th class="column">(None)</th>
                   <td></td>
                   <td></td>
-                  <td><label><input type="radio" name="network_source" value="none"></label></td>
-                  <td><label><input type="radio" name="network_destination" value="none"></label></td>
+                  <td></td>
+                  <td><label><input type="radio" name="network_source" value="none" checked></label></td>
+                  <td><label><input type="radio" name="network_destination" value="none" checked></label></td>
                 </tr>
               </thead>
               <tbody>

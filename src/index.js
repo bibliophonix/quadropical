@@ -20,8 +20,7 @@ const width  = 800,
       svg = d3.select("svg").attr("width", width).attr("height", height);
 
 
-let data, columns, selectedColumns, idColumn, networkSource, networkDestination,
-      documents,
+let data, columns, selectedColumns, idColumn, labelColumn, networkSource, networkDestination,
       stopwords = defaultStopwords,
       customStopwords = [],
       removedDefaultStopwords = [],
@@ -51,7 +50,12 @@ function loadCsv(event) {
     const file = fileUpload.files.item(0);
     d3.select("#current-file span").text(file.name);
     const reader = new FileReader();
-    reader.addEventListener("loadend", event => file.name.endsWith(".csv") ? parseAndShowCsvHeaders(event.srcElement.result) : loadSessionFile(event.srcElement.result));
+    reader.addEventListener("loadend", event => {
+      if (file.name.endsWith(".csv"))
+        parseAndShowCsvHeaders(event.srcElement.result);
+      else
+        loadSessionFile(event.srcElement.result);
+    });
     reader.readAsText(file);
   }
 }
@@ -64,10 +68,10 @@ function loadSessionFile(session) {
   columns                 = session.columns;
   selectedColumns         = session.selectedColumns;
   idColumn                = session.idColumn;
+  labelColumn             = session.labelColumn;
   networkSource           = session.networkSource;
   networkDestination      = session.networkDestination;
   network                 = session.network;
-  documents               = session.documents;
   stopwords               = session.stopwords;
   customStopwords         = session.customStopwords;
   removedDefaultStopwords = session.removedDefaultStopwords;
@@ -89,6 +93,7 @@ function parseAndShowCsvHeaders(contents) {
   columns = data.columns;
   loadStopwords(true);
   displayColumns(columns);
+  showTopics();
 }
 
 
@@ -96,8 +101,8 @@ function displayColumns(columns, selectedColumns) {
   d3.select("#current-file").style("display", "block");
   d3.select("#download").style("display", "block");
   d3.select("#upload").style("display", "none");
-
   d3.select("#data-preparation").style("display", "block");
+
 
   let columnRows = d3.select("#select-columns table tbody")
         .selectAll("tr")
@@ -116,6 +121,10 @@ function displayColumns(columns, selectedColumns) {
         .attr("value", d => d);
   columnRows.append("td").append("label").append("input")
         .attr("type", "radio")
+        .attr("name", "label")
+        .attr("value", d => d);
+  columnRows.append("td").append("label").append("input")
+        .attr("type", "radio")
         .attr("name", "network_source")
         .attr("value", d => d);
   columnRows.append("td").append("label").append("input")
@@ -126,6 +135,7 @@ function displayColumns(columns, selectedColumns) {
   if (selectedColumns !== undefined) {
     columnRows.selectAll("input[name='columns[]']").property("checked", input => selectedColumns.includes(input));
     columnRows.selectAll("input[name='identifier'][value='" + idColumn + "']").property("checked", true);
+    columnRows.selectAll("input[name='label'][value='" + labelColumn + "']").property("checked", true);
     columnRows.selectAll("input[name='network_source'][value='" + networkSource + "']").property("checked", true);
     columnRows.selectAll("input[name='network_destination'][value='" + networkDestination + "']").property("checked", true);
   }
@@ -141,6 +151,7 @@ function reprocess(event) {
 
 
 function showTopics() {
+  document.querySelector("#top-terms>.accordion").classList.toggle("active");
   let panel = document.querySelector("#current-topics")
   panel.style.maxHeight = panel.scrollHeight + "px";
 }
@@ -155,9 +166,10 @@ function selectColumns(event) {
 function runModeling() {
   selectedColumns    = Array.from(document.querySelectorAll("input[name='columns[]']:checked")).map(checkbox => checkbox.value);
   idColumn           = document.querySelector("input[name='identifier']:checked").value;
+  labelColumn        = document.querySelector("input[name='label']:checked").value;
   networkSource      = document.querySelector("input[name='network_source']:checked").value;
   networkDestination = document.querySelector("input[name='network_destination']:checked").value;
-  documents = data.map(csvRow => {
+  let documents = data.map(csvRow => {
     let docId   = csvRow[idColumn];
     let docDate = csvRow["Pub Year"];
     return selectedColumns.reduce((docString, column) => docString += `${csvRow[column]} `, `${docId}\t${docDate}\t`);
@@ -174,8 +186,8 @@ function runModeling() {
     });
   }
 
-  initTopicModeler();
-  addDocumentReferences();
+  initTopicModeler(documents);
+  addExtraData();
   updatePage();
 }
 
@@ -188,7 +200,7 @@ function updatePage() {
 }
 
 
-function initTopicModeler() {
+function initTopicModeler(documents) {
   modeler = new TopicModeler(stopwords, documents);
   modeler.synonyms = synonyms;
   modeler.numTopics = parseInt(document.getElementById("num-topics").value);
@@ -198,8 +210,9 @@ function initTopicModeler() {
 }
 
 
-function addDocumentReferences() {
+function addExtraData() {
   modeler.documents.forEach(doc => {
+    doc.label = data.find(csvRow => csvRow[idColumn] == doc.id)[labelColumn];
     doc.links = network[doc.id];
   });
 }
@@ -356,7 +369,7 @@ function displayCurrentTopics() {
     .attr("fill", d => color(d.highestScore.topicIndex))
     .attr("opacity", 0.5)
     .attr("r", d => radius(network[d.id].length))
-    .on("click", (event, d) => showFingerprint(d));
+    .on("click", (event, d) => { showFingerprint(d); displaySelectedNode(d); });
 
   origin = {x: xScale(0), y: yScale(0)};
   let sliceAngles = [...Array(modeler.numTopics).keys()].map(num => num * (360 / modeler.numTopics));
@@ -382,6 +395,21 @@ function displayCurrentTopics() {
         resetNodeColors();
     }
   });
+}
+
+
+function displaySelectedNode(d) {
+  d3.select("#selected-node").style("display", "block");
+  d3.select("#selected-node .id span").text(d.id);
+  d3.select("#selected-node .label span").text(d.label);
+  d3.select("#selected-node .scores ol")
+      .selectAll(".score")
+      .data(d.topicCounts)
+    .enter()
+      .append("li")
+      .attr("class", "score")
+      .style("color", (d, i) => color(i))
+      .text(d => d);
 }
 
 
@@ -462,6 +490,8 @@ function resetNodeColors() {
   d3.selectAll(".score-line").remove();
   d3.selectAll(".topical-fingerprint").remove();
   d3.selectAll(".node").attr("fill", d => color(d.highestScore.topicIndex));
+  d3.select("#selected-node").style("display", "none");
+  d3.selectAll("#selected-node .score").remove();
 }
 
 
@@ -747,10 +777,10 @@ function download() {
       columns: columns,
       selectedColumns: selectedColumns,
       idColumn: idColumn,
+      labelColumn: labelColumn,
       networkSource: networkSource,
       networkDestination: networkDestination,
       network: network,
-      documents: documents,
       stopwords: stopwords,
       customStopwords: customStopwords,
       removedDefaultStopwords: removedDefaultStopwords,
