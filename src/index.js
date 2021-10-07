@@ -789,7 +789,7 @@ function download() {
       topicTopWords: topicTopWords,
       topicLabels: topicLabels
     })], {type: "application/json;charset=utf-8"}),
-    "quadropical-session-" + formatTimestamp(new Date()) + ".json"
+    "quantopical-session-" + formatTimestamp(new Date()) + ".json"
   );
 
   event.preventDefault();
