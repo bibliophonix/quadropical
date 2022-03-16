@@ -17,6 +17,7 @@
   "dependencies": {
     "d3": "^6.6.2",
     "mathjs": "^9.3.2",
+    "tone": "^14.7.77",
     "topical": "file:../topical/topical-0.3.0.tgz"
   }
 }

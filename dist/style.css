@@ -284,12 +284,18 @@ body {
 #processing-details div {
   position: relative;
   float: left;
-  width: 50%;
   margin: 1.2em auto;
 }
 
 
+#processing-details #iterations {
+  width: 50%;
+}
+
+
+#processing-details #audio-controls,
 #processing-details #network-controls {
+  width: 25%;
   text-align: right;
 }
 

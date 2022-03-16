@@ -1,8 +1,29 @@
-import * as d3 from "d3";
+import {
+  Synth, Loop, Transport, start, now, NoiseSynth, FeedbackDelay, Gate, MidSideCompressor,
+  Gain, Destination, MembraneSynth
+} from "tone";
+const Tone = { Synth, Loop, Transport, start, now, NoiseSynth, FeedbackDelay, Gate,
+               MidSideCompressor, Gain, Destination, MembraneSynth };
+
+import { select, selectAll } from "d3-selection";
+import { scaleLinear, scaleSqrt, scaleOrdinal } from "d3-scale";
+import { schemeCategory10 } from "d3-scale-chromatic";
+import { timeFormat } from "d3-time-format";
+import { format } from "d3-format";
+import { csvParse } from "d3-dsv";
+import { extent, max, descending } from "d3-array";
+import { rgb } from "d3-color";
+const d3 = { select, selectAll, scaleLinear, scaleSqrt, scaleOrdinal, schemeCategory10,
+             timeFormat, format, csvParse, extent, max, descending, rgb };
+
 import { complex, add, subtract, multiply, chain, sqrt, unit, sin, cos, to, tan, atan } from "mathjs";
 import { TopicModeler } from "topical";
 import defaultStopwords from "./stopwords.js";
 import saveAs           from "./saveas.js";
+import noteData         from "./note_data.js";
+
+
+const synth = new Tone.Synth().toDestination();
 
 
 // GLOBALS
@@ -30,7 +51,9 @@ let data, columns, selectedColumns, idColumn, labelColumn, networkSource, networ
       network = {},
       synonyms = {},
       annotationGroup = svg.append("g").attr("class", "annotations"),
-      origin, firstCornerAngle, secondCornerAngle, thirdCornerAngle, fourthCornerAngle;
+      origin, firstCornerAngle, secondCornerAngle, thirdCornerAngle, fourthCornerAngle,
+      toneStarted = false,
+      scaleDegrees = [];
 
 
 const topicCountLabels = {
@@ -197,6 +220,12 @@ function updatePage() {
   clearQuadrants();
   displayCurrentTopics();
   updateTitle();
+  updateSoundProperties();
+}
+
+
+function updateSoundProperties() {
+  scaleDegrees = new Array(modeler.numTopics).fill(0).map((v, i) => Math.round((12 / modeler.numTopics) * i));
 }
 
 
@@ -369,7 +398,7 @@ function displayCurrentTopics() {
     .attr("fill", d => color(d.highestScore.topicIndex))
     .attr("opacity", 0.5)
     .attr("r", d => radius(network[d.id].length))
-    .on("click", (event, d) => { showFingerprint(d); displaySelectedNode(d); });
+    .on("click", (event, d) => { showFingerprint2(d); displaySelectedNode(d); });
 
   origin = {x: xScale(0), y: yScale(0)};
   let sliceAngles = [...Array(modeler.numTopics).keys()].map(num => num * (360 / modeler.numTopics));
@@ -410,6 +439,42 @@ function displaySelectedNode(d) {
       .attr("class", "score")
       .style("color", (d, i) => color(i))
       .text(d => d);
+}
+
+
+function showFingerprint2(d) {
+  resetNodeColors();
+
+  // Gray out all other dots
+  d3.selectAll(".node")
+    .filter(node => node.id != d.id)
+    .attr("fill", "lightgrey")
+    .attr("opacity", 0.33);
+
+  // What are the topic scores for the current node/article?
+  let topicPoints = Object.keys(d.scoredTopicCoordinates).map(topicIndex => {
+    let score = d.scoredTopicCoordinates[topicIndex];
+    return {x: xScale(score.re), y: yScale(score.im), topicIndex: topicIndex, rawScore: d.topicCounts[topicIndex]};
+  }).sort((a, b) => (a.rawScore > b.rawScore) ? 1 : ((b.rawScore > a.rawScore) ? -1 : 0));
+
+  const articleScores = svg.append("g").attr("class", "article-score-container")
+      .selectAll(".article-score")
+      .data(topicPoints)
+    .join("g")
+      .attr("class", "article-score")
+      .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+  articleScores.append("circle")
+    .attr("class", "topic-score")
+    .attr("fill", d => color(d.topicIndex))
+    .attr("r", 10);
+
+  let now = Tone.now();
+  topicPoints.forEach((item, i) => {
+    let currentNote = scaleDegrees[parseInt(item.topicIndex)] + 60;
+    let noteOnset = now + (i * 0.125);
+    synth.triggerAttackRelease(currentNote, "32n", noteOnset);
+  });
 }
 
 
@@ -492,6 +557,7 @@ function resetNodeColors() {
   d3.selectAll(".node").attr("fill", d => color(d.highestScore.topicIndex));
   d3.select("#selected-node").style("display", "none");
   d3.selectAll("#selected-node .score").remove();
+  d3.select(".article-score-container").remove();
 }
 
 
@@ -826,6 +892,13 @@ const ready = () => {
   document.getElementById("download-button").addEventListener("click", download);
   document.querySelectorAll(".accordion").forEach(sectionName => sectionName.addEventListener("click", toggleAccordion));
   document.getElementById("num-topics").addEventListener("change", updateTitle);
+
+  document.querySelector("button#start-audio").addEventListener("click", () => {
+    if (!toneStarted) {
+      Tone.start();
+      toneStarted = true;
+    }
+  });
 };
 
 if (document.readyState === "complete" || (document.readyState !== "loading" && !document.documentElement.doScroll))
