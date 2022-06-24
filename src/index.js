@@ -11,10 +11,11 @@ import { schemeCategory10 } from "d3-scale-chromatic";
 import { timeFormat } from "d3-time-format";
 import { format } from "d3-format";
 import { csvParse } from "d3-dsv";
+import { text } from "d3-fetch";
 import { extent, max, descending } from "d3-array";
 import { rgb } from "d3-color";
 const d3 = { select, selectAll, scaleLinear, scaleSqrt, scaleOrdinal, schemeCategory10,
-             timeFormat, format, csvParse, extent, max, descending, rgb };
+             timeFormat, format, csvParse, text, extent, max, descending, rgb };
 
 import { complex, add, subtract, multiply, chain, sqrt, unit, sin, cos, to, tan, atan } from "mathjs";
 import { TopicModeler } from "topical";
@@ -67,7 +68,7 @@ const topicCountLabels = {
   "10": "Decopical"
 }
 
-function loadCsv(event) {
+function loadDataFile(event) {
   let fileUpload = event.target;
   if ("files" in fileUpload) {
     const file = fileUpload.files.item(0);
@@ -75,9 +76,9 @@ function loadCsv(event) {
     const reader = new FileReader();
     reader.addEventListener("loadend", event => {
       if (file.name.endsWith(".csv"))
-        parseAndShowCsvHeaders(event.srcElement.result);
+        parseAndShowCsvHeaders(event.target.result);
       else
-        loadSessionFile(event.srcElement.result);
+        loadSessionFile(event.target.result);
     });
     reader.readAsText(file);
   }
@@ -878,12 +879,20 @@ function updateTitle() {
 }
 
 
+async function loadSampleData() {
+  const sampleDataPath = "data/ccd-sample-data.json";
+  const data = await d3.text(sampleDataPath);
+  d3.select("#current-file span").append("a").attr("href", sampleDataPath).text(sampleDataPath);
+  loadSessionFile(data);
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
   document.getElementById("select-columns").addEventListener("submit", selectColumns);
   document.getElementById("reprocess").addEventListener("click", reprocess);
-  document.getElementById("corpus-upload").addEventListener("change", loadCsv);
+  document.getElementById("corpus-upload").addEventListener("change", loadDataFile);
   document.getElementById("resweep").addEventListener("click", resweep);
   document.querySelector("#add-stopwords form").addEventListener("submit", addManualStopwords);
   document.querySelector("#add-synonyms form").addEventListener("submit", addManualSynonyms);
@@ -892,6 +901,13 @@ const ready = () => {
   document.getElementById("download-button").addEventListener("click", download);
   document.querySelectorAll(".accordion").forEach(sectionName => sectionName.addEventListener("click", toggleAccordion));
   document.getElementById("num-topics").addEventListener("change", updateTitle);
+  document.getElementById("load-sample-data").addEventListener("click", loadSampleData);
+
+  if (window.location.hash) {
+    const searchParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (searchParams.get("sampledata") == "true")
+      loadSampleData();
+  }
 
   document.querySelector("button#start-audio").addEventListener("click", () => {
     if (!toneStarted) {

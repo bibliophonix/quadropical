@@ -8,6 +8,16 @@ body {
 }
 
 
+a, a:visited {
+  color: #05b;
+}
+
+
+a:hover {
+  text-decoration: none;
+}
+
+
 #content {
   position: relative;
   width: 1080px;
@@ -38,7 +48,7 @@ body {
 }
 
 
-#upload, #current-file, #download {
+#current-file, #download {
   margin-top: 2em;
 }
 
@@ -55,11 +65,35 @@ body {
 }
 
 
-#upload p, #current-file p, #download p {
+#upload p, #upload h2, #upload h3, #current-file p, #download p {
   position: relative;
   float: left;
   width: 100%;
+}
+
+
+#current-file p, #download p {
   margin: .5em auto 0;
+}
+
+
+#upload {
+  margin-top: 1em;
+}
+
+
+#upload h2 {
+  margin-top: 0
+}
+
+
+#upload h3 {
+  margin: 1em auto .1em;
+}
+
+
+#upload p {
+  margin: .5em auto .5em;
 }
 
 
