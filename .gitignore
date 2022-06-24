@@ -1,6 +1,6 @@
 .DS_Store
 *.tgz
 package-lock.json
-dist/main.js*
+dist/js
 node_modules/
 tmp/

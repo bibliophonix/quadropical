@@ -1,23 +1,22 @@
 {
   "name": "quantopical",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Quantile graphing and topic modeling.",
+  "browser": "dist/js/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack"
+    "build": "node build.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Stephen Meyer",
   "license": "ISC",
   "devDependencies": {
-    "webpack": "^5.33.2",
-    "webpack-cli": "^4.6.0"
+    "esbuild": "^0.14.43"
   },
   "dependencies": {
     "d3": "^6.6.2",
     "mathjs": "^9.3.2",
     "tone": "^14.7.77",
-    "topical": "file:../topical/topical-0.3.0.tgz"
+    "topical": "file:~/Documents/programming/javascript/topical/topical-0.3.0.tgz"
   }
 }
