@@ -163,6 +163,31 @@ a:hover {
 }
 
 
+#corpus-topics h2, #corpus-topics span {
+  margin-top: 10px;
+}
+
+
+#corpus-topics span {
+  float: right;
+  padding-top: 3px;
+  padding-right: 10px;
+  color: #05b;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+#corpus-topics span:hover {
+  text-decoration: none;
+}
+
+
+#corpus-topics ol li {
+  display: list-item;
+}
+
+
 #corpus-topics ol, #selected-node ol {
   margin-left: 0;
   padding-left: 25px;

@@ -24,6 +24,17 @@ import saveAs           from "./saveas.js";
 import noteData         from "./note_data.js";
 
 
+// Helpers
+Array.prototype.move = (from, to) => {
+  this.splice(to, 0, this.splice(from, 1)[0]);
+};
+
+
+function insertAfter(referenceNode, newNode) {
+  referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
+}
+
+
 const synth = new Tone.Synth().toDestination();
 
 
@@ -344,6 +355,7 @@ function displayCurrentTopics() {
     .enter()
       .append("li")
       .attr("class", "topic")
+      .attr("id", (d,i) => `topic-${i}`)
       .text(d => d.split(" ").slice(0, 4).join(" "));
 
   // For the top topic words, how many topics do they appear in?
@@ -887,6 +899,61 @@ async function loadSampleData() {
 }
 
 
+function editCorpusTopics(event) {
+  document.querySelector("#corpus-topics ol").classList.toggle("editing");
+  let topics = document.querySelectorAll("#corpus-topics ol li");
+  topics.forEach(topic => topic.classList.toggle("movable"));
+  if (event.target.textContent == "Edit") {
+
+    event.target.textContent = "Done";
+    topics.forEach(topic => {
+      topic.setAttribute("draggable", true);
+      topic.addEventListener("dragstart", startMove);
+      topic.ondragover = dragOver;
+      topic.ondragleave = dragLeave;
+      topic.ondrop = drop;
+      topic.style.cursor = "move";
+    });
+    
+
+  } else {
+
+    event.target.textContent = "Edit";
+    topics.forEach(topic => {
+      topic.removeAttribute("draggable");
+      topic.style.cursor = "text";
+    });
+
+  }
+}
+
+
+function startMove(event) {
+  event.dataTransfer.setData("text/plain", event.target.id);
+  event.dataTransfer.dropEffect = "copy";
+}
+
+
+function dragOver(event) {
+  event.dataTransfer.dropEffect = "move";
+  event.currentTarget.style.borderBottom = "1px solid #aaa";
+  event.preventDefault();
+}
+
+
+function dragLeave(event) {
+  event.currentTarget.style.borderBottom = "none";
+}
+
+
+function drop(event) {
+  const data = document.getElementById(event.dataTransfer.getData("text/plain"));
+  insertAfter(event.target, data);
+  event.currentTarget.style.borderBottom = "none";
+  event.preventDefault();
+}
+
+
 // Handler when the DOM is fully loaded
 const ready = () => {
   // EVENT WATCHERS
@@ -902,6 +969,7 @@ const ready = () => {
   document.querySelectorAll(".accordion").forEach(sectionName => sectionName.addEventListener("click", toggleAccordion));
   document.getElementById("num-topics").addEventListener("change", updateTitle);
   document.getElementById("load-sample-data").addEventListener("click", loadSampleData);
+  document.getElementById("edit-corpus-topics").addEventListener("click", editCorpusTopics);
 
   if (window.location.hash) {
     const searchParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
