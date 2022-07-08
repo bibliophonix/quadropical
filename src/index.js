@@ -35,6 +35,11 @@ function insertAfter(referenceNode, newNode) {
 }
 
 
+function unique(value, index, self) {
+  return self.indexOf(value) === index;
+}
+
+
 const synth = new Tone.Synth().toDestination();
 
 
@@ -137,7 +142,6 @@ function displayColumns(columns, selectedColumns) {
   d3.select("#download").style("display", "block");
   d3.select("#upload").style("display", "none");
   d3.select("#data-preparation").style("display", "block");
-
 
   let columnRows = d3.select("#select-columns table tbody")
         .selectAll("tr")
@@ -248,6 +252,7 @@ function initTopicModeler(documents) {
   modeler.processCorpus();
   modeler.requestedSweeps = 100;
   sweep();
+  generateCoordinates();
 }
 
 
@@ -285,6 +290,7 @@ function resweep() {
   clearTopics();
   modeler.requestedSweeps = modeler.completeSweeps + 50;
   sweep();
+  generateCoordinates();
   clearQuadrants();
   displayCurrentTopics();
 }
@@ -306,15 +312,18 @@ function sweep() {
     topicTopWords[topic] = modeler.topNWords(modeler.topicWordCounts[topic], 20);
 
   topicLabels = topicTopWords.map(topWords => topWords.split(" ")[0]);
+}
 
+
+function generateCoordinates() {
   // For each rotation angle, find its complex number representation on the unit circle.
   let sliceAngle = 360 / modeler.numTopics;
   let rotationAngles = [...Array(modeler.numTopics).keys()].map(num => (num * sliceAngle) + (sliceAngle / 2));
   let rotationCoefficients = rotationAngles.map(angle => complex( cos(unit(angle, "deg")), sin(unit(angle, "deg")) ));
 
   // Given the rotation coefficients representing the unit circle angle positions, multiply them by the corresponding
-  // topic scores in each document, then  add them all together to determine the final coordinates.
-  modeler.documents.forEach((doc, j) => {
+  // topic scores in each document, then add them all together to determine the final coordinates.
+  modeler.documents.forEach((doc) => {
     // Start by finding only the topics that were scored greater than 0 for the current document while
     // being sure to maintain the score index so it lines up with rotation angle indices.
     doc.highestScore = {score: -1, topicIndex: -1};
@@ -809,11 +818,6 @@ function getDocumentById(id) {
 }
 
 
-function unique(value, index, self) {
-  return self.indexOf(value) === index;
-}
-
-
 function addManualStopwords() {
   document.getElementById("manual-stopwords").value.split(/\s+/).forEach(word => {
     d3.select("#stopwords ol").append("li").attr("class", "stopword custom-stopword").text(word);
@@ -914,7 +918,6 @@ function editCorpusTopics(event) {
       topic.ondrop = drop;
       topic.style.cursor = "move";
     });
-    
 
   } else {
 
@@ -924,6 +927,19 @@ function editCorpusTopics(event) {
       topic.style.cursor = "text";
     });
 
+    // Now that the order has been rearranged in the UI list, sync the order for topics within the embedded data objects.
+    let listOrder = Array.from(document.querySelectorAll("#corpus-topics ol li")).map(t => parseInt(t.id.replace("topic-", "")));
+
+    // Update the order of the top word and label lists.
+    topicTopWords = listOrder.map(i => topicTopWords[i]);
+    topicLabels   = topicTopWords.map(topWords => topWords.split(" ")[0]);
+
+    // Update the order of the topic scores (topicCounts field) for each document and then recompute the complex pane coordinates.
+    modeler.documents.forEach(doc => doc.topicCounts = listOrder.map(i => doc.topicCounts[i]));
+    generateCoordinates();
+
+    updatePage();
+    showTopics();
   }
 }
 
