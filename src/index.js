@@ -315,6 +315,21 @@ function sweep() {
 }
 
 
+/**
+ * Calculate the angle in degrees for a complex number with real and imaginary parts. The complex number
+ * should be an object with re: and im: keys.
+ *
+ * @param {Mathjs complex number} complexNum the complex number to compute the angle for
+ * @returns the angle of the complex number in degrees
+ */
+ const angleForComplexNumber = (complexNum) => {
+  if (complexNum.im == 0 && complexNum.re < 0) return 180;
+
+  let angle = (2 * Math.atan(complexNum.im / (complexNum.re + Math.sqrt((complexNum.re * complexNum.re) + (complexNum.im * complexNum.im))))) * (180 / Math.PI);
+  return angle < 0 ? angle + 360 : angle;
+}
+
+
 function generateCoordinates() {
   // For each rotation angle, find its complex number representation on the unit circle.
   let sliceAngle = 360 / modeler.numTopics;
