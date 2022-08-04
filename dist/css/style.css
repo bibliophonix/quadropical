@@ -182,6 +182,12 @@ a:hover {
   text-decoration: none;
 }
 
+#corpus-topics ol {
+  display: block;
+  float: left;
+  margin-top: 0;
+}
+
 
 #corpus-topics ol li {
   display: list-item;
